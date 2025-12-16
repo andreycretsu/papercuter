@@ -1,0 +1,19 @@
+{
+  "name": "papercuts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Papercuts web app + Chrome extension",
+  "scripts": {
+    "dev": "npm run dev -w @papercuts/web",
+    "dev:web": "npm run dev -w @papercuts/web",
+    "dev:ext": "npm run dev -w @papercuts/extension",
+    "build": "npm run build -ws",
+    "lint": "npm run lint -ws"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

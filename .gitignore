@@ -1,0 +1,17 @@
+node_modules
+apps/**/node_modules
+
+# Next.js
+apps/web/.next
+apps/web/out
+
+# Env files (never commit secrets)
+apps/web/.env*
+
+# WXT build outputs
+apps/extension/.output
+apps/extension/.wxt
+
+# macOS
+.DS_Store
+
