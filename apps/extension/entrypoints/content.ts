@@ -5,6 +5,10 @@ type StartSelectionMessage = {
   descriptionText?: string;
 };
 
+type CaptureAreaMessage = {
+  type: 'CAPTURE_AREA';
+};
+
 function createOverlay() {
   const overlay = document.createElement('div');
   overlay.style.position = 'fixed';
@@ -63,13 +67,25 @@ async function cropToPngBytes(opts: {
   return await blob.arrayBuffer();
 }
 
-async function runSelectionFlow(msg: StartSelectionMessage) {
+async function selectAreaBytes(): Promise<ArrayBuffer | null> {
   const { overlay, box } = createOverlay();
   document.documentElement.appendChild(overlay);
 
   let startX = 0;
   let startY = 0;
   let dragging = false;
+
+  let resolved = false;
+  let resolvePromise: (v: ArrayBuffer | null) => void = () => {};
+  const promise = new Promise<ArrayBuffer | null>((resolve) => {
+    resolvePromise = resolve;
+  });
+
+  const done = (val: ArrayBuffer | null) => {
+    if (resolved) return;
+    resolved = true;
+    resolvePromise(val);
+  };
 
   const cleanup = () => {
     overlay.remove();
@@ -80,6 +96,7 @@ async function runSelectionFlow(msg: StartSelectionMessage) {
     if (e.key === 'Escape') {
       e.preventDefault();
       cleanup();
+      done(null);
     }
   };
   window.addEventListener('keydown', onKeyDown, true);
@@ -133,7 +150,7 @@ async function runSelectionFlow(msg: StartSelectionMessage) {
       const rect = { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
       cleanup();
 
-      if (rect.width < 8 || rect.height < 8) return;
+      if (rect.width < 8 || rect.height < 8) return done(null);
 
       const capture = (await browser.runtime.sendMessage({
         type: 'CAPTURE_VISIBLE',
@@ -145,25 +162,46 @@ async function runSelectionFlow(msg: StartSelectionMessage) {
         dpr: window.devicePixelRatio || 1,
       });
 
-      await browser.runtime.sendMessage({
-        type: 'UPLOAD_AND_CREATE',
-        baseUrl: msg.baseUrl ?? 'http://localhost:3000',
-        name: msg.name ?? 'New papercut',
-        descriptionText: msg.descriptionText ?? '',
-        imageBytes: bytes,
-      });
+      done(bytes);
     },
     true
   );
+
+  return await promise;
 }
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   main() {
-    browser.runtime.onMessage.addListener((message) => {
-      const msg = message as StartSelectionMessage;
-      if (msg?.type !== 'START_SELECTION') return;
-      void runSelectionFlow(msg);
+    browser.runtime.onMessage.addListener(async (message) => {
+      const msg = message as StartSelectionMessage | CaptureAreaMessage;
+
+      // Popup flow: capture only, return bytes to popup (no auto-create)
+      if (msg?.type === 'CAPTURE_AREA') {
+        const imageBytes = await selectAreaBytes();
+        if (!imageBytes) return { cancelled: true };
+        return { imageBytes };
+      }
+
+      // Shortcut / legacy flow: capture area and create immediately with defaults
+      if (msg?.type === 'START_SELECTION') {
+        const imageBytes = await selectAreaBytes();
+        if (!imageBytes) return;
+
+        const stored = await browser.storage.local.get('papercuts_baseUrl');
+        const baseUrl =
+          typeof stored['papercuts_baseUrl'] === 'string' && stored['papercuts_baseUrl'].trim()
+            ? stored['papercuts_baseUrl']
+            : msg.baseUrl ?? 'http://localhost:3000';
+
+        await browser.runtime.sendMessage({
+          type: 'UPLOAD_AND_CREATE',
+          baseUrl,
+          name: msg.name ?? 'New papercut',
+          descriptionText: msg.descriptionText ?? '',
+          imageBytes,
+        });
+      }
     });
   },
 });

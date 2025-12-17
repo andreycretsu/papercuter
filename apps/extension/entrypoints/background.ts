@@ -31,6 +31,12 @@ function textToHtml(text: string) {
   return `<p>${escaped.replaceAll('\n', '<br/>')}</p>`;
 }
 
+function imageAndTextToHtml(imageUrl: string, text: string) {
+  const img = `<p><img src="${imageUrl}" alt="Screenshot" /></p>`;
+  const rest = (text ?? '').trim() ? textToHtml(text) : '';
+  return `${img}${rest}`;
+}
+
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener(async (message, sender) => {
     const msg = message as
@@ -69,7 +75,7 @@ export default defineBackground(() => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           name: msg.name,
-          descriptionHtml: textToHtml(msg.descriptionText ?? ''),
+          descriptionHtml: imageAndTextToHtml(uploadJson.url, msg.descriptionText ?? ''),
           screenshotUrl: uploadJson.url,
         }),
       });
