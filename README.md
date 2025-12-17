@@ -40,6 +40,17 @@ Security note: don’t paste secrets into chats/screenshots. If you already did,
    - `SUPABASE_SECRET_KEY` (the `sb_secret_...` key; keep server-only; never expose in the browser)
 3. Create the `papercuts` table (SQL below)
 
+## Deploy (web app)
+
+The web app can be deployed to Vercel. Auto-deploy is enabled via GitHub Actions in `.github/workflows/deploy-vercel.yml`.
+
+In your GitHub repo settings, add these **Secrets and variables → Actions → Secrets**:
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+After that, every push to `main` will deploy `apps/web` to Vercel.
+
 #### Cloudinary setup
 
 1. Create a Cloudinary account

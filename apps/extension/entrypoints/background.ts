@@ -11,6 +11,13 @@ type UploadAndCreateRequest = {
   imageBytes: ArrayBuffer;
 };
 
+type CreateOnlyRequest = {
+  type: 'CREATE_ONLY';
+  baseUrl: string;
+  name: string;
+  descriptionText?: string;
+};
+
 function normalizeBaseUrl(url: string) {
   const trimmed = url.trim().replace(/\/+$/, '');
   return trimmed || 'http://localhost:3000';
@@ -26,7 +33,10 @@ function textToHtml(text: string) {
 
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener(async (message, sender) => {
-    const msg = message as CaptureVisibleRequest | UploadAndCreateRequest;
+    const msg = message as
+      | CaptureVisibleRequest
+      | UploadAndCreateRequest
+      | CreateOnlyRequest;
 
     if (msg?.type === 'CAPTURE_VISIBLE') {
       const windowId =
@@ -68,6 +78,25 @@ export default defineBackground(() => {
       }
       const created = (await createRes.json()) as { item: any };
 
+      await browser.tabs.create({ url: baseUrl });
+      return { item: created.item };
+    }
+
+    if (msg?.type === 'CREATE_ONLY') {
+      const baseUrl = normalizeBaseUrl(msg.baseUrl);
+      const createRes = await fetch(`${baseUrl}/api/papercuts`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: msg.name,
+          descriptionHtml: textToHtml(msg.descriptionText ?? ''),
+          screenshotUrl: null,
+        }),
+      });
+      if (!createRes.ok) {
+        return { error: 'Create failed' };
+      }
+      const created = (await createRes.json()) as { item: any };
       await browser.tabs.create({ url: baseUrl });
       return { item: created.item };
     }

@@ -7,7 +7,7 @@ export default defineConfig({
     name: 'Papercuts',
     description: 'Capture a selected area of the screen and create a papercut',
     permissions: ['activeTab', 'tabs', 'storage'],
-    host_permissions: ['http://localhost:3000/*'],
+    host_permissions: ['http://localhost:*/*'],
     commands: {
       capture_papercut: {
         suggested_key: {

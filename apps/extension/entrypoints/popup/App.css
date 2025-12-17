@@ -20,6 +20,34 @@
   margin-top: 12px;
 }
 
+.segmented {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.seg {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 10px;
+  cursor: pointer;
+}
+
+.seg.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.94);
+}
+
 .label {
   font-size: 12px;
   font-weight: 600;

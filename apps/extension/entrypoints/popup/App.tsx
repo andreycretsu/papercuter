@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
+  const [mode, setMode] = useState<'screenshot' | 'scratch'>('screenshot');
   const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
   const [name, setName] = useState('New papercut');
   const [descriptionText, setDescriptionText] = useState('');
@@ -14,7 +15,25 @@ function App() {
     });
   }, []);
 
-  const capture = async () => {
+  const createFromScratch = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      const res = (await browser.runtime.sendMessage({
+        type: 'CREATE_ONLY',
+        baseUrl,
+        name: name.trim() || 'New papercut',
+        descriptionText,
+      })) as { error?: string };
+      if (res?.error) throw new Error(res.error);
+      window.close();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const createFromScreenshot = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -39,7 +58,24 @@ function App() {
   return (
     <div className="wrap">
       <div className="title">Papercuts</div>
-      <div className="sub">Select an area and create a new papercut.</div>
+      <div className="sub">Create from scratch or from a screenshot.</div>
+
+      <div className="segmented" role="tablist" aria-label="Create mode">
+        <button
+          type="button"
+          className={mode === 'scratch' ? 'seg active' : 'seg'}
+          onClick={() => setMode('scratch')}
+        >
+          From scratch
+        </button>
+        <button
+          type="button"
+          className={mode === 'screenshot' ? 'seg active' : 'seg'}
+          onClick={() => setMode('screenshot')}
+        >
+          From screenshot
+        </button>
+      </div>
 
       <div className="field">
         <div className="label">Web app URL</div>
@@ -69,11 +105,21 @@ function App() {
         />
       </div>
 
-      <button className="primary" onClick={capture} disabled={isSaving}>
-        {isSaving ? 'Starting…' : 'Capture selected area'}
-      </button>
-
-      <div className="hint">Tip: use Ctrl/⌘ + Shift + S</div>
+      {mode === 'scratch' ? (
+        <>
+          <button className="primary" onClick={createFromScratch} disabled={isSaving}>
+            {isSaving ? 'Creating…' : 'Create papercut'}
+          </button>
+          <div className="hint">Creates a papercut without a screenshot.</div>
+        </>
+      ) : (
+        <>
+          <button className="primary" onClick={createFromScreenshot} disabled={isSaving}>
+            {isSaving ? 'Starting…' : 'Select area & create'}
+          </button>
+          <div className="hint">Tip: use Ctrl/⌘ + Shift + S</div>
+        </>
+      )}
     </div>
   );
 }
