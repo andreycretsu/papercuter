@@ -7,6 +7,7 @@
     "dev": "npm run dev -w @papercuts/web",
     "dev:web": "npm run dev -w @papercuts/web",
     "dev:ext": "npm run dev -w @papercuts/extension",
+    "build:ext": "npm run build -w @papercuts/extension",
     "build": "npm run build -ws",
     "lint": "npm run lint -ws"
   },

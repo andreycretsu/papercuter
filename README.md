@@ -86,25 +86,36 @@ Description supports:
 - links
 - paste or drag & drop images (they upload and insert full-width)
 
-## Run the extension (dev)
+## Run the extension (recommended: single “real” extension)
 
-In another terminal:
+Build once:
 
 ```bash
-npm run dev:ext
+npm run build:ext
 ```
 
-WXT will build the extension here:
-- `apps/extension/.output/chrome-mv3-dev`
-
-Note: the extension dev server runs on port **3002** to avoid clashing with the web app (which runs on **3000**).
+Then load this folder (this is the **only one you should load**):
+- `apps/extension/.output/chrome-mv3`
 
 ### Load into Chrome
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select folder: `apps/extension/.output/chrome-mv3-dev`
+4. Select folder: `apps/extension/.output/chrome-mv3`
+
+If you previously loaded the `chrome-mv3-dev` folder, remove that extension entry from Chrome — keep only one.
+
+## Extension dev mode (only if you’re actively coding it)
+
+Dev mode runs a hot-reload server and produces a separate dev build folder.
+
+```bash
+npm run dev:ext
+```
+
+Dev folder (only for hot reload):
+- `apps/extension/.output/chrome-mv3-dev`
 
 ### Capture flow
 
