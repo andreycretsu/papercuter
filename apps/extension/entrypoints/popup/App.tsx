@@ -6,6 +6,17 @@ async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
   return await res.arrayBuffer();
 }
 
+function isRestrictedUrl(url: string | undefined) {
+  if (!url) return true;
+  return (
+    url.startsWith('chrome://') ||
+    url.startsWith('chrome-extension://') ||
+    url.startsWith('edge://') ||
+    url.startsWith('about:') ||
+    url.startsWith('file://')
+  );
+}
+
 function App() {
   const [step, setStep] = useState<
     'choose' | 'scratch' | 'screenshot-method' | 'screenshot-form'
@@ -16,12 +27,19 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [imageBytes, setImageBytes] = useState<ArrayBuffer | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [activeTabUrl, setActiveTabUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     browser.storage.local.get('papercuts_baseUrl').then((res) => {
       const v = res['papercuts_baseUrl'];
       if (typeof v === 'string' && v.trim()) setBaseUrl(v);
     });
+
+    browser.tabs
+      .query({ active: true, currentWindow: true })
+      .then(([tab]) => setActiveTabUrl(tab?.url ?? null))
+      .catch(() => setActiveTabUrl(null));
   }, []);
 
   const resetDraft = () => {
@@ -30,6 +48,7 @@ function App() {
     setImageBytes(null);
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
     setImagePreviewUrl(null);
+    setError(null);
   };
 
   const createFromScratch = async () => {
@@ -45,6 +64,8 @@ function App() {
       })) as { error?: string };
       if (res?.error) throw new Error(res.error);
       window.close();
+    } catch (e) {
+      setError('Could not create papercut. Is the web app URL correct and running?');
     } finally {
       setIsSaving(false);
     }
@@ -60,6 +81,10 @@ function App() {
         currentWindow: true,
       });
       if (!tab?.id) return;
+      if (isRestrictedUrl(tab.url)) {
+        setError('Can’t capture on this page. Open any normal website tab and try again.');
+        return;
+      }
       const res = (await browser.tabs.sendMessage(tab.id, {
         type: 'CAPTURE_AREA',
       })) as { cancelled?: boolean; imageBytes?: ArrayBuffer };
@@ -70,6 +95,10 @@ function App() {
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
       setImagePreviewUrl(url);
       setStep('screenshot-form');
+    } catch (e) {
+      setError(
+        "Couldn’t start the area selector. Open a normal website tab (not chrome://extensions) and try again."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -80,6 +109,10 @@ function App() {
     setIsSaving(true);
     try {
       await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      if (isRestrictedUrl(activeTabUrl ?? undefined)) {
+        setError('Can’t capture on this page. Open any normal website tab and try again.');
+        return;
+      }
       const cap = (await browser.runtime.sendMessage({
         type: 'CAPTURE_VISIBLE',
       })) as { dataUrl: string };
@@ -88,6 +121,8 @@ function App() {
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
       setImagePreviewUrl(url);
       setStep('screenshot-form');
+    } catch (e) {
+      setError('Could not capture the screen. Open a normal website tab and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -108,6 +143,8 @@ function App() {
       })) as { error?: string };
       if (res?.error) throw new Error(res.error);
       window.close();
+    } catch (e) {
+      setError('Could not upload/create. Is the web app URL correct and running?');
     } finally {
       setIsSaving(false);
     }
@@ -115,6 +152,7 @@ function App() {
 
   return (
     <div className="wrap">
+      {error ? <div className="error">{error}</div> : null}
       {step === 'choose' ? (
         <>
           <div className="title">Papercuts</div>
@@ -199,7 +237,9 @@ function App() {
                   <div className="tileDesc">Captures the current visible viewport.</div>
                 </button>
               </div>
-              <div className="hint">After capture, we’ll show the form.</div>
+              <div className="hint">
+                After capture, we’ll show the form. (Tip: capturing won’t work on `chrome://` pages.)
+              </div>
             </>
           ) : (
             <>

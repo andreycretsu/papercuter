@@ -46,6 +46,17 @@
   gap: 10px;
 }
 
+.error {
+  margin-bottom: 10px;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #7f1d1d;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .tile:disabled {
   opacity: 0.7;
   cursor: default;
