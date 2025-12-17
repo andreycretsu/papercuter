@@ -123,7 +123,6 @@ export function DescriptionEditor(props: {
         <>
           <BubbleMenu
             editor={editor}
-            options={{ duration: 120, maxWidth: "none" }}
             className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 shadow-lg backdrop-blur"
           >
             <Button
@@ -167,7 +166,7 @@ export function DescriptionEditor(props: {
 
           <FloatingMenu
             editor={editor}
-            options={{ duration: 120, maxWidth: "none", placement: "left" }}
+            options={{ placement: "left" }}
             shouldShow={({ editor, state }) => {
               // Show on empty paragraph at cursor (block-menu vibe)
               const { $from } = state.selection;
