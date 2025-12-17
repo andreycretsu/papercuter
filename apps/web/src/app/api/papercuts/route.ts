@@ -3,8 +3,10 @@ import {
   createPapercutSupabase,
   listPapercutsSupabase,
 } from "@/server/papercuts-supabase-store";
+import { requirePapercutsApiKey } from "@/server/api-key";
 
 export async function GET() {
+  // Reads are allowed without API key (so the web UI works normally).
   try {
     const items = await listPapercutsSupabase();
     return NextResponse.json({ items });
@@ -17,6 +19,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = requirePapercutsApiKey(req);
+  if (unauthorized) return unauthorized;
+
   const body = (await req.json().catch(() => null)) as null | {
     name?: unknown;
     descriptionHtml?: unknown;

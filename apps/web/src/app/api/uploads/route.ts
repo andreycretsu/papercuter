@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { requirePapercutsApiKey } from "@/server/api-key";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,6 +19,9 @@ function ensureCloudinaryConfigured() {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = requirePapercutsApiKey(req);
+  if (unauthorized) return unauthorized;
+
   const form = await req.formData();
   const file = form.get("file");
 

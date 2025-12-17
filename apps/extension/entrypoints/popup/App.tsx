@@ -22,6 +22,7 @@ function App() {
     'choose' | 'scratch' | 'screenshot-method' | 'screenshot-form'
   >('choose');
   const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
+  const [apiKey, setApiKey] = useState('');
   const [name, setName] = useState('New papercut');
   const [descriptionText, setDescriptionText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -31,9 +32,11 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    browser.storage.local.get('papercuts_baseUrl').then((res) => {
+    browser.storage.local.get(['papercuts_baseUrl', 'papercuts_apiKey']).then((res) => {
       const v = res['papercuts_baseUrl'];
       if (typeof v === 'string' && v.trim()) setBaseUrl(v);
+      const k = res['papercuts_apiKey'];
+      if (typeof k === 'string') setApiKey(k);
     });
 
     browser.tabs
@@ -55,10 +58,14 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      await browser.storage.local.set({
+        papercuts_baseUrl: baseUrl,
+        papercuts_apiKey: apiKey,
+      });
       const res = (await browser.runtime.sendMessage({
         type: 'CREATE_ONLY',
         baseUrl,
+        apiKey,
         name: name.trim() || 'New papercut',
         descriptionText,
       })) as { error?: string };
@@ -75,7 +82,10 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      await browser.storage.local.set({
+        papercuts_baseUrl: baseUrl,
+        papercuts_apiKey: apiKey,
+      });
       const [tab] = await browser.tabs.query({
         active: true,
         currentWindow: true,
@@ -108,7 +118,10 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      await browser.storage.local.set({
+        papercuts_baseUrl: baseUrl,
+        papercuts_apiKey: apiKey,
+      });
       if (isRestrictedUrl(activeTabUrl ?? undefined)) {
         setError('Can’t capture on this page. Open any normal website tab and try again.');
         return;
@@ -133,10 +146,14 @@ function App() {
     if (!imageBytes) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({ papercuts_baseUrl: baseUrl });
+      await browser.storage.local.set({
+        papercuts_baseUrl: baseUrl,
+        papercuts_apiKey: apiKey,
+      });
       const res = (await browser.runtime.sendMessage({
         type: 'UPLOAD_AND_CREATE',
         baseUrl,
+        apiKey,
         name: name.trim() || 'New papercut',
         descriptionText,
         imageBytes,
@@ -255,6 +272,15 @@ function App() {
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
                   placeholder="http://localhost:3000"
+                />
+              </div>
+
+              <div className="field">
+                <div className="label">API key</div>
+                <input
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Shared key (from web app settings)"
                 />
               </div>
 

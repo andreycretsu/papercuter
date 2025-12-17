@@ -188,15 +188,23 @@ export default defineContentScript({
         const imageBytes = await selectAreaBytes();
         if (!imageBytes) return;
 
-        const stored = await browser.storage.local.get('papercuts_baseUrl');
+        const stored = await browser.storage.local.get([
+          'papercuts_baseUrl',
+          'papercuts_apiKey',
+        ]);
         const baseUrl =
           typeof stored['papercuts_baseUrl'] === 'string' && stored['papercuts_baseUrl'].trim()
             ? stored['papercuts_baseUrl']
             : msg.baseUrl ?? 'http://localhost:3000';
+        const apiKey =
+          typeof stored['papercuts_apiKey'] === 'string'
+            ? stored['papercuts_apiKey']
+            : undefined;
 
         await browser.runtime.sendMessage({
           type: 'UPLOAD_AND_CREATE',
           baseUrl,
+          apiKey,
           name: msg.name ?? 'New papercut',
           descriptionText: msg.descriptionText ?? '',
           imageBytes,

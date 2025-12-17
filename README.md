@@ -59,6 +59,13 @@ After that, every push to `main` will deploy `apps/web` to Vercel.
    - `CLOUDINARY_API_KEY`
    - `CLOUDINARY_API_SECRET`
 
+#### Extension API key (recommended)
+
+Set `PAPERCUTS_API_KEY` in `apps/web/.env.local` to any long random string.
+Then paste the same value into the extension popup “API key” field.
+
+This prevents random websites from calling your `/api/uploads` and `/api/papercuts` endpoints.
+
 #### SQL: create the `papercuts` table
 
 Run this in Supabase SQL editor:

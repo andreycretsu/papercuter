@@ -6,6 +6,7 @@ type CaptureVisibleRequest = {
 type UploadAndCreateRequest = {
   type: 'UPLOAD_AND_CREATE';
   baseUrl: string;
+  apiKey?: string;
   name: string;
   descriptionText?: string;
   imageBytes: ArrayBuffer;
@@ -14,6 +15,7 @@ type UploadAndCreateRequest = {
 type CreateOnlyRequest = {
   type: 'CREATE_ONLY';
   baseUrl: string;
+  apiKey?: string;
   name: string;
   descriptionText?: string;
 };
@@ -35,6 +37,12 @@ function imageAndTextToHtml(imageUrl: string, text: string) {
   const img = `<p><img src="${imageUrl}" alt="Screenshot" /></p>`;
   const rest = (text ?? '').trim() ? textToHtml(text) : '';
   return `${img}${rest}`;
+}
+
+function withApiKey(headers: Record<string, string>, apiKey?: string) {
+  const k = (apiKey ?? '').trim();
+  if (!k) return headers;
+  return { ...headers, 'x-papercuts-key': k };
 }
 
 export default defineBackground(() => {
@@ -63,6 +71,7 @@ export default defineBackground(() => {
 
       const uploadRes = await fetch(`${baseUrl}/api/uploads`, {
         method: 'POST',
+        headers: withApiKey({}, msg.apiKey),
         body: form,
       });
       if (!uploadRes.ok) {
@@ -72,7 +81,7 @@ export default defineBackground(() => {
 
       const createRes = await fetch(`${baseUrl}/api/papercuts`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
         body: JSON.stringify({
           name: msg.name,
           descriptionHtml: imageAndTextToHtml(uploadJson.url, msg.descriptionText ?? ''),
@@ -92,7 +101,7 @@ export default defineBackground(() => {
       const baseUrl = normalizeBaseUrl(msg.baseUrl);
       const createRes = await fetch(`${baseUrl}/api/papercuts`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
         body: JSON.stringify({
           name: msg.name,
           descriptionHtml: textToHtml(msg.descriptionText ?? ''),
