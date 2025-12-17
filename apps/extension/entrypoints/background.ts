@@ -3,12 +3,25 @@ type CaptureVisibleRequest = {
   windowId?: number;
 };
 
+type CaptureVisibleOpenFormRequest = {
+  type: 'CAPTURE_VISIBLE_OPEN_FORM';
+  baseUrl: string;
+  apiKey?: string;
+};
+
 type UploadAndCreateRequest = {
   type: 'UPLOAD_AND_CREATE';
   baseUrl: string;
   apiKey?: string;
   name: string;
   descriptionText?: string;
+  imageBytes: ArrayBuffer;
+};
+
+type UploadAndOpenFormRequest = {
+  type: 'UPLOAD_AND_OPEN_FORM';
+  baseUrl: string;
+  apiKey?: string;
   imageBytes: ArrayBuffer;
 };
 
@@ -45,47 +58,98 @@ function withApiKey(headers: Record<string, string>, apiKey?: string) {
   return { ...headers, 'x-papercuts-key': k };
 }
 
+function buildNewPapercutUrl(baseUrl: string, screenshotUrl?: string) {
+  const u = new URL(baseUrl);
+  u.searchParams.set('new', '1');
+  if (screenshotUrl) u.searchParams.set('screenshotUrl', screenshotUrl);
+  u.searchParams.set('from', 'extension');
+  return u.toString();
+}
+
+async function uploadImageToApp(opts: {
+  baseUrl: string;
+  apiKey?: string;
+  imageBytes: ArrayBuffer;
+}) {
+  const baseUrl = normalizeBaseUrl(opts.baseUrl);
+  const imageBlob = new Blob([opts.imageBytes], { type: 'image/png' });
+  const form = new FormData();
+  form.set('file', imageBlob, 'papercut.png');
+
+  const uploadRes = await fetch(`${baseUrl}/api/uploads`, {
+    method: 'POST',
+    headers: withApiKey({}, opts.apiKey),
+    body: form,
+  });
+  if (!uploadRes.ok) {
+    return { error: 'Upload failed' as const };
+  }
+  const uploadJson = (await uploadRes.json()) as { url: string };
+  return { url: uploadJson.url as string };
+}
+
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener(async (message, sender) => {
     const msg = message as
       | CaptureVisibleRequest
+      | CaptureVisibleOpenFormRequest
       | UploadAndCreateRequest
+      | UploadAndOpenFormRequest
       | CreateOnlyRequest;
 
     if (msg?.type === 'CAPTURE_VISIBLE') {
-      const windowId =
-        typeof msg.windowId === 'number'
-          ? msg.windowId
-          : sender.tab?.windowId ?? undefined;
-      const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
-        format: 'png',
-      });
-      return { dataUrl };
+      try {
+        const windowId =
+          typeof msg.windowId === 'number'
+            ? msg.windowId
+            : sender.tab?.windowId ?? undefined;
+        const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
+          format: 'png',
+        });
+        return { dataUrl };
+      } catch {
+        return { error: 'Capture failed' };
+      }
+    }
+
+    if (msg?.type === 'CAPTURE_VISIBLE_OPEN_FORM') {
+      try {
+        const windowId = sender.tab?.windowId ?? undefined;
+        const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
+          format: 'png',
+        });
+        const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
+        const uploaded = await uploadImageToApp({
+          baseUrl: msg.baseUrl,
+          apiKey: msg.apiKey,
+          imageBytes,
+        });
+        if ('error' in uploaded) return uploaded;
+
+        const target = buildNewPapercutUrl(normalizeBaseUrl(msg.baseUrl), uploaded.url);
+        await browser.tabs.create({ url: target });
+        return { ok: true };
+      } catch {
+        return { error: 'Capture/upload failed' };
+      }
     }
 
     if (msg?.type === 'UPLOAD_AND_CREATE') {
       const baseUrl = normalizeBaseUrl(msg.baseUrl);
-      const imageBlob = new Blob([msg.imageBytes], { type: 'image/png' });
-      const form = new FormData();
-      form.set('file', imageBlob, 'papercut.png');
-
-      const uploadRes = await fetch(`${baseUrl}/api/uploads`, {
-        method: 'POST',
-        headers: withApiKey({}, msg.apiKey),
-        body: form,
+      const uploaded = await uploadImageToApp({
+        baseUrl,
+        apiKey: msg.apiKey,
+        imageBytes: msg.imageBytes,
       });
-      if (!uploadRes.ok) {
-        return { error: 'Upload failed' };
-      }
-      const uploadJson = (await uploadRes.json()) as { url: string };
+      if ('error' in uploaded) return uploaded;
 
       const createRes = await fetch(`${baseUrl}/api/papercuts`, {
         method: 'POST',
         headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
         body: JSON.stringify({
           name: msg.name,
-          descriptionHtml: imageAndTextToHtml(uploadJson.url, msg.descriptionText ?? ''),
-          screenshotUrl: uploadJson.url,
+          descriptionHtml: imageAndTextToHtml(uploaded.url, msg.descriptionText ?? ''),
+          screenshotUrl: uploaded.url,
         }),
       });
       if (!createRes.ok) {
@@ -95,6 +159,19 @@ export default defineBackground(() => {
 
       await browser.tabs.create({ url: baseUrl });
       return { item: created.item };
+    }
+
+    if (msg?.type === 'UPLOAD_AND_OPEN_FORM') {
+      const uploaded = await uploadImageToApp({
+        baseUrl: msg.baseUrl,
+        apiKey: msg.apiKey,
+        imageBytes: msg.imageBytes,
+      });
+      if ('error' in uploaded) return uploaded;
+
+      const target = buildNewPapercutUrl(normalizeBaseUrl(msg.baseUrl), uploaded.url);
+      await browser.tabs.create({ url: target });
+      return { ok: true };
     }
 
     if (msg?.type === 'CREATE_ONLY') {

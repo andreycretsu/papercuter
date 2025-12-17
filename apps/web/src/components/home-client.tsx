@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 import type { Papercut } from "@/server/papercuts-supabase-store";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,10 @@ export function HomeClient(props: {
   initialPapercuts: Papercut[];
   initialError?: string | null;
 }) {
+  const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<Papercut[]>(props.initialPapercuts);
+  const [prefillScreenshotUrl, setPrefillScreenshotUrl] = React.useState<string | null>(null);
 
   const refresh = async () => {
     try {
@@ -27,6 +30,14 @@ export function HomeClient(props: {
       toast.error("Couldn’t load papercuts");
     }
   };
+
+  React.useEffect(() => {
+    const shouldOpen = searchParams.get("new") === "1";
+    if (!shouldOpen) return;
+    const screenshotUrl = searchParams.get("screenshotUrl");
+    setPrefillScreenshotUrl(screenshotUrl);
+    setOpen(true);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,6 +110,7 @@ export function HomeClient(props: {
       <PapercutFocusDialog
         open={open}
         onOpenChange={setOpen}
+        initialScreenshotUrl={prefillScreenshotUrl}
         onCreated={() => refresh()}
       />
     </div>

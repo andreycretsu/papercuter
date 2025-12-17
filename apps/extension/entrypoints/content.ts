@@ -9,6 +9,12 @@ type CaptureAreaMessage = {
   type: 'CAPTURE_AREA';
 };
 
+type StartSelectionOpenFormMessage = {
+  type: 'START_SELECTION_OPEN_FORM';
+  baseUrl: string;
+  apiKey?: string;
+};
+
 function createOverlay() {
   const overlay = document.createElement('div');
   overlay.style.position = 'fixed';
@@ -174,13 +180,30 @@ export default defineContentScript({
   matches: ['<all_urls>'],
   main() {
     browser.runtime.onMessage.addListener(async (message) => {
-      const msg = message as StartSelectionMessage | CaptureAreaMessage;
+      const msg = message as
+        | StartSelectionMessage
+        | CaptureAreaMessage
+        | StartSelectionOpenFormMessage;
 
       // Popup flow: capture only, return bytes to popup (no auto-create)
       if (msg?.type === 'CAPTURE_AREA') {
         const imageBytes = await selectAreaBytes();
         if (!imageBytes) return { cancelled: true };
         return { imageBytes };
+      }
+
+      // Popup flow: capture area, upload, then open the web app form (popup closes immediately)
+      if (msg?.type === 'START_SELECTION_OPEN_FORM') {
+        const imageBytes = await selectAreaBytes();
+        if (!imageBytes) return { cancelled: true };
+
+        await browser.runtime.sendMessage({
+          type: 'UPLOAD_AND_OPEN_FORM',
+          baseUrl: msg.baseUrl,
+          apiKey: msg.apiKey,
+          imageBytes,
+        });
+        return { ok: true };
       }
 
       // Shortcut / legacy flow: capture area and create immediately with defaults

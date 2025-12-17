@@ -19,7 +19,7 @@ function isRestrictedUrl(url: string | undefined) {
 
 function App() {
   const [step, setStep] = useState<
-    'choose' | 'scratch' | 'screenshot-method' | 'screenshot-preview' | 'screenshot-form'
+    'choose' | 'scratch' | 'screenshot-method'
   >('choose');
   const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
   const [apiKey, setApiKey] = useState('');
@@ -96,7 +96,7 @@ function App() {
     }
   };
 
-  const captureSelectArea = async () => {
+  const startSelectArea = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -110,16 +110,13 @@ function App() {
         setError('Can’t capture on this page. Open any normal website tab and try again.');
         return;
       }
-      const res = (await browser.tabs.sendMessage(tab.id, {
-        type: 'CAPTURE_AREA',
-      })) as { cancelled?: boolean; imageBytes?: ArrayBuffer };
-      if (res?.cancelled || !res?.imageBytes) return;
-
-      const bytes = res.imageBytes;
-      setImageBytes(bytes);
-      const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-      setImagePreviewUrl(url);
-      setStep('screenshot-preview');
+      // Start selection in the page and close popup so you can drag immediately.
+      await browser.tabs.sendMessage(tab.id, {
+        type: 'START_SELECTION_OPEN_FORM',
+        baseUrl,
+        apiKey,
+      });
+      window.close();
     } catch (e) {
       const msg = String((e as any)?.message ?? '');
       if (msg.includes('Receiving end does not exist') || msg.includes('Could not establish connection')) {
@@ -134,7 +131,7 @@ function App() {
     }
   };
 
-  const captureVisibleScreen = async () => {
+  const startCaptureVisible = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -143,42 +140,15 @@ function App() {
         setError('Can’t capture on this page. Open any normal website tab and try again.');
         return;
       }
-      const cap = (await browser.runtime.sendMessage({
-        type: 'CAPTURE_VISIBLE',
-      })) as { dataUrl: string };
-      const bytes = await dataUrlToBytes(cap.dataUrl);
-      setImageBytes(bytes);
-      const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-      setImagePreviewUrl(url);
-      setStep('screenshot-preview');
-    } catch (e) {
-      setError('Could not capture the screen. Open a normal website tab and try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const createFromScreenshot = async () => {
-    if (isSaving) return;
-    if (!imageBytes) return;
-    setIsSaving(true);
-    try {
-      await browser.storage.local.set({
-        papercuts_baseUrl: baseUrl,
-        papercuts_apiKey: apiKey,
-      });
       const res = (await browser.runtime.sendMessage({
-        type: 'UPLOAD_AND_CREATE',
+        type: 'CAPTURE_VISIBLE_OPEN_FORM',
         baseUrl,
         apiKey,
-        name: name.trim() || 'New papercut',
-        descriptionText,
-        imageBytes,
-      })) as { error?: string };
+      })) as { error?: string; ok?: boolean };
       if (res?.error) throw new Error(res.error);
       window.close();
     } catch (e) {
-      setError('Could not upload/create. Is the web app URL correct and running?');
+      setError('Could not capture the screen. Open a normal website tab and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -264,18 +234,14 @@ function App() {
                   ? 'From scratch'
                   : step === 'screenshot-method'
                     ? 'From screenshot'
-                    : step === 'screenshot-preview'
-                      ? 'Confirm screenshot'
-                    : 'Screenshot details'}
+                    : 'From screenshot'}
               </div>
               <div className="sub">
                 {step === 'scratch'
                   ? 'Create without a screenshot.'
                   : step === 'screenshot-method'
                     ? 'Capture first, then add name + description.'
-                    : step === 'screenshot-preview'
-                      ? 'Looks good? Use it or retake.'
-                    : 'Name + description (screenshot already attached).'}
+                    : 'Capture first, then add name + description.'}
               </div>
             </div>
           </div>
@@ -286,7 +252,7 @@ function App() {
                 <button
                   type="button"
                   className="tile"
-                  onClick={captureSelectArea}
+                  onClick={startSelectArea}
                   disabled={isSaving}
                 >
                   <div className="tileTitle">Select area</div>
@@ -295,7 +261,7 @@ function App() {
                 <button
                   type="button"
                   className="tile"
-                  onClick={captureVisibleScreen}
+                  onClick={startCaptureVisible}
                   disabled={isSaving}
                 >
                   <div className="tileTitle">Capture visible screen</div>
@@ -303,49 +269,11 @@ function App() {
                 </button>
               </div>
               <div className="hint">
-                After capture, we’ll show the form. (Tip: capturing won’t work on `chrome://` pages.)
-              </div>
-            </>
-          ) : step === 'screenshot-preview' ? (
-            <>
-              {imagePreviewUrl ? (
-                <div className="preview">
-                  <img src={imagePreviewUrl} alt="Screenshot preview" />
-                </div>
-              ) : null}
-              <div className="row">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setError(null);
-                    setImageBytes(null);
-                    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-                    setImagePreviewUrl(null);
-                    setStep('screenshot-method');
-                  }}
-                  disabled={isSaving}
-                >
-                  Retake
-                </button>
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => setStep('screenshot-form')}
-                  disabled={!imageBytes}
-                >
-                  Use screenshot
-                </button>
+                We’ll close this popup, start capture immediately, then open the web app form with the screenshot prefilled.
               </div>
             </>
           ) : (
             <>
-              {step === 'screenshot-form' && imagePreviewUrl ? (
-                <div className="preview">
-                  <img src={imagePreviewUrl} alt="Screenshot preview" />
-                </div>
-              ) : null}
-
               <div className="field">
                 <div className="label">Name</div>
                 <input
@@ -369,20 +297,7 @@ function App() {
                 <button className="primary" onClick={createFromScratch} disabled={isSaving}>
                   {isSaving ? 'Creating…' : 'Create papercut'}
                 </button>
-              ) : (
-                <>
-                  <button
-                    className="primary"
-                    onClick={createFromScreenshot}
-                    disabled={isSaving || !imageBytes}
-                  >
-                    {isSaving ? 'Creating…' : 'Create papercut'}
-                  </button>
-                  <div className="hint">
-                    Screenshot will be attached and inserted into the description automatically.
-                  </div>
-                </>
-              )}
+              ) : null}
             </>
           )}
         </>

@@ -20,6 +20,8 @@ export function PapercutFocusDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialScreenshotUrl?: string | null;
+  initialName?: string | null;
+  initialDescriptionHtml?: string | null;
   onCreated?: (created: {
     id: string;
     name: string;
@@ -38,7 +40,17 @@ export function PapercutFocusDialog(props: {
   React.useEffect(() => {
     if (!props.open) return;
     setScreenshotUrl(props.initialScreenshotUrl ?? null);
-  }, [props.open, props.initialScreenshotUrl]);
+    if (!name && props.initialName) setName(props.initialName);
+    if (!descriptionHtml) {
+      if (props.initialDescriptionHtml) setDescriptionHtml(props.initialDescriptionHtml);
+      else if (props.initialScreenshotUrl) {
+        setDescriptionHtml(
+          `<p><img src="${props.initialScreenshotUrl}" alt="Screenshot" /></p>`
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.open, props.initialScreenshotUrl, props.initialName, props.initialDescriptionHtml]);
 
   const create = async () => {
     if (isSaving) return;
