@@ -19,7 +19,7 @@ function isRestrictedUrl(url: string | undefined) {
 
 function App() {
   const [step, setStep] = useState<
-    'choose' | 'scratch' | 'screenshot-method' | 'screenshot-form'
+    'choose' | 'scratch' | 'screenshot-method' | 'screenshot-preview' | 'screenshot-form'
   >('choose');
   const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
   const [apiKey, setApiKey] = useState('');
@@ -30,6 +30,7 @@ function App() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [activeTabUrl, setActiveTabUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState<number | null>(null);
 
   useEffect(() => {
     browser.storage.local.get(['papercuts_baseUrl', 'papercuts_apiKey']).then((res) => {
@@ -41,7 +42,10 @@ function App() {
 
     browser.tabs
       .query({ active: true, currentWindow: true })
-      .then(([tab]) => setActiveTabUrl(tab?.url ?? null))
+      .then(([tab]) => {
+        setActiveTabUrl(tab?.url ?? null);
+        setActiveTabId(typeof tab?.id === 'number' ? tab.id : null);
+      })
       .catch(() => setActiveTabUrl(null));
   }, []);
 
@@ -54,14 +58,28 @@ function App() {
     setError(null);
   };
 
+  const saveSettings = async () => {
+    await browser.storage.local.set({
+      papercuts_baseUrl: baseUrl,
+      papercuts_apiKey: apiKey,
+    });
+  };
+
+  const refreshCurrentTab = async () => {
+    if (!activeTabId) return;
+    try {
+      await browser.tabs.reload(activeTabId);
+      setError('Tab refreshed. Try capture again.');
+    } catch {
+      setError('Could not refresh the tab automatically. Please refresh it manually and try again.');
+    }
+  };
+
   const createFromScratch = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({
-        papercuts_baseUrl: baseUrl,
-        papercuts_apiKey: apiKey,
-      });
+      await saveSettings();
       const res = (await browser.runtime.sendMessage({
         type: 'CREATE_ONLY',
         baseUrl,
@@ -82,10 +100,7 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({
-        papercuts_baseUrl: baseUrl,
-        papercuts_apiKey: apiKey,
-      });
+      await saveSettings();
       const [tab] = await browser.tabs.query({
         active: true,
         currentWindow: true,
@@ -104,11 +119,16 @@ function App() {
       setImageBytes(bytes);
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
       setImagePreviewUrl(url);
-      setStep('screenshot-form');
+      setStep('screenshot-preview');
     } catch (e) {
-      setError(
-        "Couldn’t start the area selector. Open a normal website tab (not chrome://extensions) and try again."
-      );
+      const msg = String((e as any)?.message ?? '');
+      if (msg.includes('Receiving end does not exist') || msg.includes('Could not establish connection')) {
+        setError(
+          "This tab needs a refresh so the extension can inject the capture overlay. Refresh the page once, then try again."
+        );
+      } else {
+        setError("Couldn’t start the area selector. Try reloading the extension and refreshing the tab.");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -118,10 +138,7 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await browser.storage.local.set({
-        papercuts_baseUrl: baseUrl,
-        papercuts_apiKey: apiKey,
-      });
+      await saveSettings();
       if (isRestrictedUrl(activeTabUrl ?? undefined)) {
         setError('Can’t capture on this page. Open any normal website tab and try again.');
         return;
@@ -133,7 +150,7 @@ function App() {
       setImageBytes(bytes);
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
       setImagePreviewUrl(url);
-      setStep('screenshot-form');
+      setStep('screenshot-preview');
     } catch (e) {
       setError('Could not capture the screen. Open a normal website tab and try again.');
     } finally {
@@ -169,11 +186,38 @@ function App() {
 
   return (
     <div className="wrap">
-      {error ? <div className="error">{error}</div> : null}
+      {error ? (
+        <div className="error">
+          <div>{error}</div>
+          {error.toLowerCase().includes('refresh') ? (
+            <button type="button" className="errorBtn" onClick={refreshCurrentTab}>
+              Refresh this tab
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {step === 'choose' ? (
         <>
           <div className="title">Papercuts</div>
           <div className="sub">Create from scratch or from a screenshot.</div>
+
+          <div className="field">
+            <div className="label">Web app URL</div>
+            <input
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder="https://your-app.vercel.app"
+            />
+          </div>
+
+          <div className="field">
+            <div className="label">API key</div>
+            <input
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Copy from the web app “Extension API key”"
+            />
+          </div>
 
           <div className="tiles">
             <button
@@ -220,6 +264,8 @@ function App() {
                   ? 'From scratch'
                   : step === 'screenshot-method'
                     ? 'From screenshot'
+                    : step === 'screenshot-preview'
+                      ? 'Confirm screenshot'
                     : 'Screenshot details'}
               </div>
               <div className="sub">
@@ -227,6 +273,8 @@ function App() {
                   ? 'Create without a screenshot.'
                   : step === 'screenshot-method'
                     ? 'Capture first, then add name + description.'
+                    : step === 'screenshot-preview'
+                      ? 'Looks good? Use it or retake.'
                     : 'Name + description (screenshot already attached).'}
               </div>
             </div>
@@ -258,6 +306,38 @@ function App() {
                 After capture, we’ll show the form. (Tip: capturing won’t work on `chrome://` pages.)
               </div>
             </>
+          ) : step === 'screenshot-preview' ? (
+            <>
+              {imagePreviewUrl ? (
+                <div className="preview">
+                  <img src={imagePreviewUrl} alt="Screenshot preview" />
+                </div>
+              ) : null}
+              <div className="row">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setError(null);
+                    setImageBytes(null);
+                    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+                    setImagePreviewUrl(null);
+                    setStep('screenshot-method');
+                  }}
+                  disabled={isSaving}
+                >
+                  Retake
+                </button>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => setStep('screenshot-form')}
+                  disabled={!imageBytes}
+                >
+                  Use screenshot
+                </button>
+              </div>
+            </>
           ) : (
             <>
               {step === 'screenshot-form' && imagePreviewUrl ? (
@@ -265,24 +345,6 @@ function App() {
                   <img src={imagePreviewUrl} alt="Screenshot preview" />
                 </div>
               ) : null}
-
-              <div className="field">
-                <div className="label">Web app URL</div>
-                <input
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="http://localhost:3000"
-                />
-              </div>
-
-              <div className="field">
-                <div className="label">API key</div>
-                <input
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Shared key (from web app settings)"
-                />
-              </div>
 
               <div className="field">
                 <div className="label">Name</div>
