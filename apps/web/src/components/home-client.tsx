@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
+import { ApiKeyCard } from "@/components/api-key-card";
 
 export function HomeClient(props: {
   initialPapercuts: Papercut[];
@@ -38,6 +39,8 @@ export function HomeClient(props: {
             </div>
           </Card>
         ) : null}
+
+        <ApiKeyCard />
 
         <div className="flex items-center justify-between gap-3">
           <div>

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { getOrCreatePapercutsApiKey } from "@/server/app-settings";
 
-export function requirePapercutsApiKey(req: Request): NextResponse | null {
-  const expected = process.env.PAPERCUTS_API_KEY?.trim();
-  if (!expected) return null; // not enforced
+export async function requirePapercutsApiKey(
+  req: Request
+): Promise<NextResponse | null> {
+  const expected = await getOrCreatePapercutsApiKey();
 
   const got = req.headers.get("x-papercuts-key")?.trim();
   if (!got || got !== expected) {

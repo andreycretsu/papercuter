@@ -19,7 +19,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const unauthorized = requirePapercutsApiKey(req);
+  const unauthorized = await requirePapercutsApiKey(req);
   if (unauthorized) return unauthorized;
 
   const body = (await req.json().catch(() => null)) as null | {

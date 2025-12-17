@@ -19,7 +19,7 @@ function ensureCloudinaryConfigured() {
 }
 
 export async function POST(req: Request) {
-  const unauthorized = requirePapercutsApiKey(req);
+  const unauthorized = await requirePapercutsApiKey(req);
   if (unauthorized) return unauthorized;
 
   const form = await req.formData();
