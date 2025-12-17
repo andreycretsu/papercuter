@@ -1,8 +1,9 @@
 import { HomeClient } from "@/components/home-client";
 import { listPapercutsSupabase } from "@/server/papercuts-supabase-store";
+import type { Papercut } from "@/server/papercuts-supabase-store";
 
 export default async function Home() {
-  let papercuts = [];
+  let papercuts: Papercut[] = [];
   let setupError: string | null = null;
   try {
     papercuts = await listPapercutsSupabase();
