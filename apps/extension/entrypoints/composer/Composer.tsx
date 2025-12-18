@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Placeholder from '@tiptap/extension-placeholder';
 import './Composer.css';
 
 function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
@@ -13,24 +17,6 @@ function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | n
   return { baseUrl, apiKey };
 }
 
-function escapeHtml(text: string) {
-  return (text ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
-
-function textToHtml(text: string) {
-  const escaped = escapeHtml(text);
-  return `<p>${escaped.replaceAll('\n', '<br/>')}</p>`;
-}
-
-function imageAndTextToHtml(imageUrl: string, text: string) {
-  const img = `<p><img src="${imageUrl}" alt="Screenshot" /></p>`;
-  const rest = (text ?? '').trim() ? textToHtml(text) : '';
-  return `${img}${rest}`;
-}
-
 export default function Composer() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const screenshotKey = params.get('screenshotKey') ?? '';
@@ -41,13 +27,31 @@ export default function Composer() {
   const baseUrl = parsed?.baseUrl ?? '';
   const apiKey = parsed?.apiKey ?? '';
 
-  const [name, setName] = useState('New papercut');
-  const [descriptionText, setDescriptionText] = useState('');
+  const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string>('');
   const [screenshotBytes, setScreenshotBytes] = useState<Uint8Array | null>(null);
+  const [screenshotInjected, setScreenshotInjected] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+      }),
+      Placeholder.configure({
+        placeholder: 'Add a description...',
+      }),
+    ],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'tiptap-editor',
+      },
+    },
+  });
 
   useEffect(() => {
     browser.storage.local.get(['papercuts_connect', 'pending_screenshot_bytes']).then((res) => {
@@ -59,10 +63,17 @@ export default function Composer() {
         const uint8 = new Uint8Array(bytes);
         setScreenshotBytes(uint8);
 
-        // Convert to data URL for preview
+        // Convert to data URL and inject into editor
         const blob = new Blob([uint8], { type: 'image/png' });
         const reader = new FileReader();
-        reader.onloadend = () => setScreenshotDataUrl(reader.result as string);
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string;
+          // Inject screenshot into TipTap editor
+          if (editor && !screenshotInjected) {
+            editor.commands.setContent(`<img src="${dataUrl}" alt="Screenshot" />`);
+            setScreenshotInjected(true);
+          }
+        };
         reader.readAsDataURL(blob);
       }
     });
@@ -71,12 +82,13 @@ export default function Composer() {
     if (screenshotKey) {
       browser.storage.session.get([screenshotKey]).then((res) => {
         const dataUrl = res[screenshotKey];
-        if (typeof dataUrl === 'string') {
-          setScreenshotDataUrl(dataUrl);
+        if (typeof dataUrl === 'string' && editor && !screenshotInjected) {
+          editor.commands.setContent(`<img src="${dataUrl}" alt="Screenshot" />`);
+          setScreenshotInjected(true);
         }
       });
     }
-  }, [screenshotKey]);
+  }, [screenshotKey, editor, screenshotInjected]);
 
   const onChangeConnect = (v: string) => {
     setConnectCode(v);
@@ -120,9 +132,15 @@ export default function Composer() {
         uploadedUrl = uploadJson.url;
       }
 
-      const descriptionHtml = uploadedUrl
-        ? imageAndTextToHtml(uploadedUrl, descriptionText)
-        : textToHtml(descriptionText);
+      // Get HTML from TipTap editor and replace data URL with uploaded URL
+      let descriptionHtml = editor?.getHTML() ?? '';
+      if (uploadedUrl && descriptionHtml) {
+        // Replace data URL screenshot with uploaded URL
+        descriptionHtml = descriptionHtml.replace(
+          /<img[^>]+src="data:image\/png;base64,[^"]+"[^>]*>/g,
+          `<img src="${uploadedUrl}" alt="Screenshot" />`
+        );
+      }
 
       const res = await fetch(`${baseUrl}/api/papercuts`, {
         method: 'POST',
@@ -149,7 +167,7 @@ export default function Composer() {
       }
 
       setDone(true);
-      // Close window quickly to feel instant.
+      // Close tab after a moment
       setTimeout(() => window.close(), 350);
     } catch {
       setError('Create failed. Check your connection and try again.');
@@ -161,7 +179,7 @@ export default function Composer() {
   const retake = async () => {
     setError(null);
     if (!sourceTabId) {
-      setError('Can’t retake: missing tab context. Start capture again from the extension.');
+      setError('Cannot retake: missing tab context. Start capture again from the extension.');
       return;
     }
     try {
@@ -176,11 +194,8 @@ export default function Composer() {
   };
 
   return (
-    <div className="wrap composer">
+    <div className="wrap composer composer-fullpage">
       <div className="title">New papercut</div>
-      <div className="sub">
-        {screenshotDataUrl ? 'Screenshot captured — add a name + a bit of context.' : 'Add a name + description.'}
-      </div>
 
       <div className="field">
         <div className="label">Connect code</div>
@@ -193,30 +208,19 @@ export default function Composer() {
 
       {parsed ? <div className="hint">Connected to: {baseUrl}</div> : <div className="hint">Not connected yet.</div>}
 
-      {screenshotDataUrl ? (
-        <div className="preview">
-          <img className="previewImg" src={screenshotDataUrl} alt="Screenshot preview" />
-          <div className="previewActions">
-            <button type="button" className="btn" onClick={retake} disabled={isSaving}>
-              Retake
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <div className="field">
         <div className="label">Name</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="What’s the papercut?" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="What's the papercut?" />
       </div>
 
       <div className="field">
-        <div className="label">Description</div>
-        <textarea
-          value={descriptionText}
-          onChange={(e) => setDescriptionText(e.target.value)}
-          placeholder="Add a short note…"
-          rows={6}
-        />
+        <div className="label">Description with screenshot</div>
+        <EditorContent editor={editor} />
+        {screenshotBytes && (
+          <button type="button" className="btn retake-btn" onClick={retake} disabled={isSaving}>
+            Retake screenshot
+          </button>
+        )}
       </div>
 
       {error ? <div className="error">{error}</div> : null}
@@ -233,5 +237,3 @@ export default function Composer() {
     </div>
   );
 }
-
-

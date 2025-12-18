@@ -222,21 +222,16 @@ export default defineBackground(() => {
             await browser.storage.session.set({ [storageKey]: msg.screenshotDataUrl });
             console.log('[Papercuts BG] Screenshot stored successfully');
 
+            // Open as extension popup (using chrome.action or browser.action API)
             try {
-              const win = await browser.windows.create({
-                url: url.toString(),
-                type: 'popup',
-                width: 420,
-                height: 720
-              });
-              console.log('[Papercuts BG] Composer window opened successfully:', win);
-              sendResponse({ ok: true });
-            } catch (windowErr) {
-              console.error('[Papercuts BG] Failed to create window:', windowErr);
-              console.log('[Papercuts BG] Falling back to tab...');
+              // We can't programmatically open the extension popup, so we open in a new tab
+              // This gives the most space and best UX for the form
               await browser.tabs.create({ url: url.toString(), active: true });
               console.log('[Papercuts BG] Composer tab opened');
               sendResponse({ ok: true });
+            } catch (err) {
+              console.error('[Papercuts BG] Failed to open Composer:', err);
+              sendResponse({ error: 'Failed to open Composer: ' + String(err) });
             }
           } catch (err) {
             console.error('[Papercuts BG] Exception:', err);
