@@ -1,107 +1,43 @@
-.composer .preview {
-  margin-top: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.composer .previewImg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.composer .previewActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.composer .actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.composer textarea {
-  width: 100%;
-  resize: vertical;
-  min-height: 110px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  font-size: 14px;
-}
-
-.composer textarea:focus {
-  outline: none;
-  border-color: rgba(0, 0, 0, 0.22);
-}
-
-.composer .ok {
-  margin-top: 10px;
-  color: #0a7a3c;
-  font-size: 13px;
-}
-
-.composer-fullpage {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  min-height: 100vh;
-}
-
-.tiptap-editor {
+/* TipTap Editor Styling */
+.ProseMirror {
   min-height: 400px;
   padding: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
   outline: none;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.6;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-.tiptap-editor:focus {
-  border-color: rgba(0, 0, 0, 0.22);
+.ProseMirror:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 1px hsl(var(--ring));
 }
 
-.tiptap-editor img {
+.ProseMirror img {
   max-width: 100%;
   height: auto;
   display: block;
   margin: 16px 0;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
 }
 
-.tiptap-editor p.is-editor-empty:first-child::before {
+.ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #aaa;
+  color: hsl(var(--muted-foreground));
   pointer-events: none;
   height: 0;
 }
 
-.tiptap-editor p {
+.ProseMirror p {
   margin: 8px 0;
 }
 
-.retake-btn {
-  margin-top: 12px;
+.ProseMirror:focus-visible {
+  outline: none;
 }
-
-.btn-destructive {
-  background: #dc2626;
-  color: white;
-}
-
-.btn-destructive:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-

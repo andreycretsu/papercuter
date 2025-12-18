@@ -3,6 +3,10 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import '../globals.css';
 import './Composer.css';
 
 function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
@@ -184,50 +188,74 @@ export default function Composer() {
   };
 
   return (
-    <div className="wrap composer composer-fullpage">
-      <div className="title">New papercut</div>
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">New papercut</h1>
+        </div>
 
-      <div className="field">
-        <div className="label">Connect code</div>
-        <input
-          value={connectCode}
-          onChange={(e) => onChangeConnect(e.target.value)}
-          placeholder="Paste Connect code from the web app"
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="connect-code">Connect code</Label>
+          <Input
+            id="connect-code"
+            value={connectCode}
+            onChange={(e) => onChangeConnect(e.target.value)}
+            placeholder="Paste Connect code from the web app"
+          />
+          {parsed ? (
+            <p className="text-sm text-muted-foreground">Connected to: {baseUrl}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Not connected yet.</p>
+          )}
+        </div>
 
-      {parsed ? <div className="hint">Connected to: {baseUrl}</div> : <div className="hint">Not connected yet.</div>}
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="What's the papercut?"
+          />
+        </div>
 
-      <div className="field">
-        <div className="label">Name</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="What's the papercut?" />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description with screenshot</Label>
+          <EditorContent editor={editor} />
+          {screenshotBytes && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={deleteScreenshot}
+              disabled={isSaving}
+              className="mt-3"
+            >
+              Delete screenshot
+            </Button>
+          )}
+        </div>
 
-      <div className="field">
-        <div className="label">Description with screenshot</div>
-        <EditorContent editor={editor} />
-        {screenshotBytes && (
-          <button
-            type="button"
-            className="btn btn-destructive retake-btn"
-            onClick={deleteScreenshot}
-            disabled={isSaving}
-          >
-            Delete screenshot
-          </button>
+        {error && (
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+            {error}
+          </div>
         )}
-      </div>
 
-      {error ? <div className="error">{error}</div> : null}
-      {done ? <div className="ok">Created ✓</div> : null}
+        {done && (
+          <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+            Created ✓
+          </div>
+        )}
 
-      <div className="actions">
-        <button type="button" className="btn" onClick={() => window.close()} disabled={isSaving}>
-          Cancel
-        </button>
-        <button type="button" className="btnPrimary" onClick={create} disabled={isSaving}>
-          {isSaving ? 'Creating…' : 'Create papercut'}
-        </button>
+        <div className="flex gap-3 justify-end">
+          <Button type="button" variant="outline" onClick={() => window.close()} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={create} disabled={isSaving}>
+            {isSaving ? 'Creating…' : 'Create papercut'}
+          </Button>
+        </div>
       </div>
     </div>
   );

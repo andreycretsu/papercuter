@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import '../globals.css';
 import './App.css';
 
 async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
@@ -178,17 +182,23 @@ function App() {
   };
 
   return (
-    <div className="wrap">
-      {error ? (
-        <div className="error">
-          <div>{error}</div>
-          {error.toLowerCase().includes('refresh') ? (
-            <button type="button" className="errorBtn" onClick={refreshCurrentTab}>
+    <div className="w-[400px] p-5 bg-background">
+      {error && (
+        <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/20 p-3">
+          <div className="text-sm text-destructive mb-2">{error}</div>
+          {error.toLowerCase().includes('refresh') && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={refreshCurrentTab}
+              className="mt-2"
+            >
               Refresh this tab
-            </button>
-          ) : null}
+            </Button>
+          )}
         </div>
-      ) : null}
+      )}
       {step === 'choose' ? (
         <>
           <div className="title">Papercuts</div>
