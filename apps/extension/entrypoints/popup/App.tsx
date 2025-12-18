@@ -131,7 +131,7 @@ function App() {
       }
       // Start selection in the page and close popup so you can drag immediately.
       await browser.tabs.sendMessage(tab.id, {
-        type: 'START_SELECTION_OPEN_FORM',
+        type: 'START_SELECTION_OPEN_COMPOSER',
         baseUrl,
         apiKey,
       });
@@ -164,7 +164,7 @@ function App() {
         return;
       }
       const res = (await browser.runtime.sendMessage({
-        type: 'CAPTURE_VISIBLE_OPEN_FORM',
+        type: 'CAPTURE_VISIBLE_OPEN_COMPOSER',
         baseUrl,
         apiKey,
       })) as { error?: string; ok?: boolean };
@@ -294,7 +294,7 @@ function App() {
                 </button>
               </div>
               <div className="hint">
-                We’ll close this popup, start capture immediately, then open the web app form with the screenshot prefilled.
+                We’ll close this popup, start capture immediately, then open an extension form with the screenshot prefilled.
               </div>
             </>
           ) : (

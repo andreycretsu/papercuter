@@ -192,13 +192,13 @@ export default defineContentScript({
         return { imageBytes };
       }
 
-      // Popup flow: capture area, upload, then open the web app form (popup closes immediately)
-      if (msg?.type === 'START_SELECTION_OPEN_FORM') {
+      // Popup flow: capture area, upload, then open the extension Composer window
+      if (msg?.type === 'START_SELECTION_OPEN_COMPOSER') {
         const imageBytes = await selectAreaBytes();
         if (!imageBytes) return { cancelled: true };
 
         const res = (await browser.runtime.sendMessage({
-          type: 'UPLOAD_AND_OPEN_FORM',
+          type: 'UPLOAD_AND_OPEN_COMPOSER',
           baseUrl: msg.baseUrl,
           apiKey: msg.apiKey,
           imageBytes,

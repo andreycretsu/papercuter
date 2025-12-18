@@ -6,7 +6,7 @@ export default defineConfig({
   manifest: {
     name: 'Papercuts',
     description: 'Capture a selected area of the screen and create a papercut',
-    permissions: ['activeTab', 'tabs', 'storage'],
+    permissions: ['activeTab', 'tabs', 'storage', 'windows'],
     // Needed so the content script can run on normal pages (for the area selector).
     host_permissions: ['http://*/*', 'https://*/*'],
     commands: {

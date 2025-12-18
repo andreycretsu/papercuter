@@ -4,7 +4,7 @@ type CaptureVisibleRequest = {
 };
 
 type CaptureVisibleOpenFormRequest = {
-  type: 'CAPTURE_VISIBLE_OPEN_FORM';
+  type: 'CAPTURE_VISIBLE_OPEN_COMPOSER';
   baseUrl: string;
   apiKey?: string;
 };
@@ -19,10 +19,15 @@ type UploadAndCreateRequest = {
 };
 
 type UploadAndOpenFormRequest = {
-  type: 'UPLOAD_AND_OPEN_FORM';
+  type: 'UPLOAD_AND_OPEN_COMPOSER';
   baseUrl: string;
   apiKey?: string;
   imageBytes: ArrayBuffer;
+};
+
+type RetakeSelectionRequest = {
+  type: 'RETARGET_RETAKE_SELECTION';
+  tabId: number;
 };
 
 type CreateOnlyRequest = {
@@ -58,12 +63,11 @@ function withApiKey(headers: Record<string, string>, apiKey?: string) {
   return { ...headers, 'x-papercuts-key': k };
 }
 
-function buildNewPapercutUrl(baseUrl: string, screenshotUrl?: string) {
-  const u = new URL(baseUrl);
-  u.searchParams.set('new', '1');
-  if (screenshotUrl) u.searchParams.set('screenshotUrl', screenshotUrl);
-  u.searchParams.set('from', 'extension');
-  // Cache-bust so you always get a fresh render when opening repeatedly
+function buildComposerUrl(opts: { screenshotUrl?: string; sourceTabId?: number }) {
+  const u = new URL(browser.runtime.getURL('composer.html'));
+  if (opts.screenshotUrl) u.searchParams.set('screenshotUrl', opts.screenshotUrl);
+  if (typeof opts.sourceTabId === 'number') u.searchParams.set('sourceTabId', String(opts.sourceTabId));
+  // Cache-bust so repeated captures always open a fresh composer window
   u.searchParams.set('ts', String(Date.now()));
   return u.toString();
 }
@@ -97,6 +101,7 @@ export default defineBackground(() => {
       | CaptureVisibleOpenFormRequest
       | UploadAndCreateRequest
       | UploadAndOpenFormRequest
+      | RetakeSelectionRequest
       | CreateOnlyRequest;
 
     if (msg?.type === 'CAPTURE_VISIBLE') {
@@ -114,7 +119,7 @@ export default defineBackground(() => {
       }
     }
 
-    if (msg?.type === 'CAPTURE_VISIBLE_OPEN_FORM') {
+    if (msg?.type === 'CAPTURE_VISIBLE_OPEN_COMPOSER') {
       try {
         const windowId = sender.tab?.windowId ?? undefined;
         const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
@@ -128,8 +133,8 @@ export default defineBackground(() => {
         });
         if ('error' in uploaded) return uploaded;
 
-        const target = buildNewPapercutUrl(normalizeBaseUrl(msg.baseUrl), uploaded.url);
-        await browser.tabs.create({ url: target });
+        const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+        await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
         return { ok: true };
       } catch {
         return { error: 'Capture/upload failed' };
@@ -163,7 +168,7 @@ export default defineBackground(() => {
       return { item: created.item };
     }
 
-    if (msg?.type === 'UPLOAD_AND_OPEN_FORM') {
+    if (msg?.type === 'UPLOAD_AND_OPEN_COMPOSER') {
       const uploaded = await uploadImageToApp({
         baseUrl: msg.baseUrl,
         apiKey: msg.apiKey,
@@ -171,9 +176,19 @@ export default defineBackground(() => {
       });
       if ('error' in uploaded) return uploaded;
 
-      const target = buildNewPapercutUrl(normalizeBaseUrl(msg.baseUrl), uploaded.url);
-      await browser.tabs.create({ url: target });
+      const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+      await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
       return { ok: true };
+    }
+
+    if (msg?.type === 'RETARGET_RETAKE_SELECTION') {
+      try {
+        await browser.tabs.update(msg.tabId, { active: true });
+        await browser.tabs.sendMessage(msg.tabId, { type: 'START_SELECTION_OPEN_COMPOSER' });
+        return { ok: true };
+      } catch {
+        return { error: 'Retake failed' };
+      }
     }
 
     if (msg?.type === 'CREATE_ONLY') {
@@ -203,6 +218,6 @@ export default defineBackground(() => {
       currentWindow: true,
     });
     if (!tab?.id) return;
-    await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION' });
+    await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION_OPEN_COMPOSER' });
   });
 });
