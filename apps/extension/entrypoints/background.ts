@@ -123,6 +123,7 @@ export default defineBackground(() => {
     }
 
     if (msg?.type === 'CAPTURE_VISIBLE_OPEN_COMPOSER') {
+      console.log('[Papercuts BG] Capturing full visible screen and opening Composer...');
       try {
         const windowId = sender.tab?.windowId ?? undefined;
         const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
@@ -136,11 +137,23 @@ export default defineBackground(() => {
         });
         if ('error' in uploaded) return uploaded;
 
+        console.log('[Papercuts BG] Upload successful, opening Composer...');
         const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
-        await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-        return { ok: true };
-      } catch {
-        return { error: 'Capture/upload failed' };
+
+        try {
+          const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+          console.log('[Papercuts BG] Composer window opened:', win);
+          return { ok: true };
+        } catch (windowErr) {
+          console.error('[Papercuts BG] Failed to create window:', windowErr);
+          console.log('[Papercuts BG] Falling back to tab...');
+          await browser.tabs.create({ url, active: true });
+          console.log('[Papercuts BG] Composer tab opened');
+          return { ok: true };
+        }
+      } catch (err) {
+        console.error('[Papercuts BG] Capture/upload failed:', err);
+        return { error: 'Capture/upload failed: ' + String(err) };
       }
     }
 
@@ -184,9 +197,19 @@ export default defineBackground(() => {
 
         console.log('[Papercuts BG] Upload successful, opening Composer window...', { url: uploaded.url });
         const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
-        await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-        console.log('[Papercuts BG] Composer window opened');
-        return { ok: true };
+
+        try {
+          const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+          console.log('[Papercuts BG] Composer window opened successfully:', win);
+          return { ok: true };
+        } catch (windowErr) {
+          console.error('[Papercuts BG] Failed to create window:', windowErr);
+          console.log('[Papercuts BG] Falling back to tab...');
+          // Fallback: open in new tab if popup fails
+          await browser.tabs.create({ url, active: true });
+          console.log('[Papercuts BG] Composer tab opened');
+          return { ok: true };
+        }
       } catch (err) {
         console.error('[Papercuts BG] Exception:', err);
         return { error: 'Upload failed: ' + String(err) };
