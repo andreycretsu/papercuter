@@ -117,7 +117,7 @@ export function DescriptionEditor(props: {
 
     const current = editor.getHTML();
     if (external !== current) {
-      editor.commands.setContent(external, false);
+      editor.commands.setContent(external, { emitUpdate: false });
     }
   }, [editor, props.valueHtml]);
 
