@@ -201,41 +201,38 @@ export default defineBackground(() => {
         }
 
         if (msg?.type === 'OPEN_COMPOSER') {
-          console.log('[Papercuts BG] Opening Composer with screenshot...');
+          console.log('[Papercuts BG] Opening screenshot preview...');
           try {
-            // Store screenshot data URL temporarily so Composer can access it
-            const composerUrl = browser.runtime.getURL('composer.html');
-            const url = new URL(composerUrl);
-
-            // Get source tab ID from sender
-            if (sender.tab?.id) {
-              url.searchParams.set('sourceTabId', String(sender.tab.id));
-            }
-            url.searchParams.set('ts', String(Date.now()));
-
-            // Store the dataUrl in session storage with a unique key
+            // Store screenshot data URL temporarily
             const storageKey = `screenshot_${Date.now()}`;
-            url.searchParams.set('screenshotKey', storageKey);
 
             // Store screenshot temporarily
             console.log('[Papercuts BG] Storing screenshot in session storage...');
             await browser.storage.session.set({ [storageKey]: msg.screenshotDataUrl });
             console.log('[Papercuts BG] Screenshot stored successfully');
 
-            // Open as extension popup (using chrome.action or browser.action API)
+            // Open screenshot preview page first
+            const previewUrl = browser.runtime.getURL('screenshot-preview.html');
+            const url = new URL(previewUrl);
+
+            // Get source tab ID from sender
+            if (sender.tab?.id) {
+              url.searchParams.set('sourceTabId', String(sender.tab.id));
+            }
+            url.searchParams.set('screenshotKey', storageKey);
+            url.searchParams.set('ts', String(Date.now()));
+
             try {
-              // We can't programmatically open the extension popup, so we open in a new tab
-              // This gives the most space and best UX for the form
               await browser.tabs.create({ url: url.toString(), active: true });
-              console.log('[Papercuts BG] Composer tab opened');
+              console.log('[Papercuts BG] Screenshot preview tab opened');
               sendResponse({ ok: true });
             } catch (err) {
-              console.error('[Papercuts BG] Failed to open Composer:', err);
-              sendResponse({ error: 'Failed to open Composer: ' + String(err) });
+              console.error('[Papercuts BG] Failed to open preview:', err);
+              sendResponse({ error: 'Failed to open preview: ' + String(err) });
             }
           } catch (err) {
             console.error('[Papercuts BG] Exception:', err);
-            sendResponse({ error: 'Failed to open Composer: ' + String(err) });
+            sendResponse({ error: 'Failed to open preview: ' + String(err) });
           }
           return;
         }
