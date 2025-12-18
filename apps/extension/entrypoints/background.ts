@@ -82,13 +82,19 @@ async function uploadImageToApp(opts: {
   const form = new FormData();
   form.set('file', imageBlob, 'papercut.png');
 
+  console.log('[Papercuts BG] Uploading to:', `${baseUrl}/api/uploads`);
   const uploadRes = await fetch(`${baseUrl}/api/uploads`, {
     method: 'POST',
     headers: withApiKey({}, opts.apiKey),
     body: form,
   });
+
+  console.log('[Papercuts BG] Upload response status:', uploadRes.status, uploadRes.statusText);
+
   if (!uploadRes.ok) {
-    return { error: 'Upload failed' as const };
+    const errorText = await uploadRes.text().catch(() => 'Unknown error');
+    console.error('[Papercuts BG] Upload failed with:', errorText);
+    return { error: `Upload failed: ${uploadRes.status} ${errorText.slice(0, 100)}` as const };
   }
   const uploadJson = (await uploadRes.json()) as { url: string };
   return { url: uploadJson.url as string };
