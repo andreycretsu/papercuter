@@ -95,7 +95,8 @@ async function uploadImageToApp(opts: {
 }
 
 export default defineBackground(() => {
-  browser.runtime.onMessage.addListener(async (message, sender) => {
+  // Use proper Chrome extension async message handling
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const msg = message as
       | CaptureVisibleRequest
       | CaptureVisibleOpenFormRequest
@@ -104,145 +105,171 @@ export default defineBackground(() => {
       | RetakeSelectionRequest
       | CreateOnlyRequest;
 
-    if (msg?.type === 'CAPTURE_VISIBLE') {
-      console.log('[Papercuts BG] Capturing visible tab...');
+    // Handle async messages
+    (async () => {
       try {
-        const windowId =
-          typeof msg.windowId === 'number'
-            ? msg.windowId
-            : sender.tab?.windowId ?? undefined;
-        const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
-          format: 'png',
-        });
-        console.log('[Papercuts BG] Capture successful, dataUrl length:', dataUrl.length);
-        return { dataUrl };
-      } catch (err) {
-        console.error('[Papercuts BG] Capture failed:', err);
-        return { error: 'Capture failed: ' + String(err) };
-      }
-    }
-
-    if (msg?.type === 'CAPTURE_VISIBLE_OPEN_COMPOSER') {
-      console.log('[Papercuts BG] Capturing full visible screen and opening Composer...');
-      try {
-        const windowId = sender.tab?.windowId ?? undefined;
-        const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
-          format: 'png',
-        });
-        const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
-        const uploaded = await uploadImageToApp({
-          baseUrl: msg.baseUrl,
-          apiKey: msg.apiKey,
-          imageBytes,
-        });
-        if ('error' in uploaded) return uploaded;
-
-        console.log('[Papercuts BG] Upload successful, opening Composer...');
-        const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
-
-        try {
-          const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-          console.log('[Papercuts BG] Composer window opened:', win);
-          return { ok: true };
-        } catch (windowErr) {
-          console.error('[Papercuts BG] Failed to create window:', windowErr);
-          console.log('[Papercuts BG] Falling back to tab...');
-          await browser.tabs.create({ url, active: true });
-          console.log('[Papercuts BG] Composer tab opened');
-          return { ok: true };
-        }
-      } catch (err) {
-        console.error('[Papercuts BG] Capture/upload failed:', err);
-        return { error: 'Capture/upload failed: ' + String(err) };
-      }
-    }
-
-    if (msg?.type === 'UPLOAD_AND_CREATE') {
-      const baseUrl = normalizeBaseUrl(msg.baseUrl);
-      const uploaded = await uploadImageToApp({
-        baseUrl,
-        apiKey: msg.apiKey,
-        imageBytes: msg.imageBytes,
-      });
-      if ('error' in uploaded) return uploaded;
-
-      const createRes = await fetch(`${baseUrl}/api/papercuts`, {
-        method: 'POST',
-        headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
-        body: JSON.stringify({
-          name: msg.name,
-          descriptionHtml: imageAndTextToHtml(uploaded.url, msg.descriptionText ?? ''),
-          screenshotUrl: uploaded.url,
-        }),
-      });
-      if (!createRes.ok) {
-        return { error: 'Create failed' };
-      }
-      const created = (await createRes.json()) as { item: any };
-      return { item: created.item };
-    }
-
-    if (msg?.type === 'UPLOAD_AND_OPEN_COMPOSER') {
-      console.log('[Papercuts BG] Uploading image...', { baseUrl: msg.baseUrl });
-      try {
-        const uploaded = await uploadImageToApp({
-          baseUrl: msg.baseUrl,
-          apiKey: msg.apiKey,
-          imageBytes: msg.imageBytes,
-        });
-        if ('error' in uploaded) {
-          console.error('[Papercuts BG] Upload failed:', uploaded.error);
-          return uploaded;
+        if (msg?.type === 'CAPTURE_VISIBLE') {
+          console.log('[Papercuts BG] Capturing visible tab...');
+          try {
+            const windowId =
+              typeof msg.windowId === 'number'
+                ? msg.windowId
+                : sender.tab?.windowId ?? undefined;
+            const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
+              format: 'png',
+            });
+            console.log('[Papercuts BG] Capture successful, dataUrl length:', dataUrl.length);
+            sendResponse({ dataUrl });
+          } catch (err) {
+            console.error('[Papercuts BG] Capture failed:', err);
+            sendResponse({ error: 'Capture failed: ' + String(err) });
+          }
+          return;
         }
 
-        console.log('[Papercuts BG] Upload successful, opening Composer window...', { url: uploaded.url });
-        const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+        if (msg?.type === 'CAPTURE_VISIBLE_OPEN_COMPOSER') {
+          console.log('[Papercuts BG] Capturing full visible screen and opening Composer...');
+          try {
+            const windowId = sender.tab?.windowId ?? undefined;
+            const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
+              format: 'png',
+            });
+            const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
+            const uploaded = await uploadImageToApp({
+              baseUrl: msg.baseUrl,
+              apiKey: msg.apiKey,
+              imageBytes,
+            });
+            if ('error' in uploaded) {
+              sendResponse(uploaded);
+              return;
+            }
 
-        try {
-          const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-          console.log('[Papercuts BG] Composer window opened successfully:', win);
-          return { ok: true };
-        } catch (windowErr) {
-          console.error('[Papercuts BG] Failed to create window:', windowErr);
-          console.log('[Papercuts BG] Falling back to tab...');
-          // Fallback: open in new tab if popup fails
-          await browser.tabs.create({ url, active: true });
-          console.log('[Papercuts BG] Composer tab opened');
-          return { ok: true };
+            console.log('[Papercuts BG] Upload successful, opening Composer...');
+            const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+
+            try {
+              const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+              console.log('[Papercuts BG] Composer window opened:', win);
+              sendResponse({ ok: true });
+            } catch (windowErr) {
+              console.error('[Papercuts BG] Failed to create window:', windowErr);
+              console.log('[Papercuts BG] Falling back to tab...');
+              await browser.tabs.create({ url, active: true });
+              console.log('[Papercuts BG] Composer tab opened');
+              sendResponse({ ok: true });
+            }
+          } catch (err) {
+            console.error('[Papercuts BG] Capture/upload failed:', err);
+            sendResponse({ error: 'Capture/upload failed: ' + String(err) });
+          }
+          return;
+        }
+
+        if (msg?.type === 'UPLOAD_AND_CREATE') {
+          const baseUrl = normalizeBaseUrl(msg.baseUrl);
+          const uploaded = await uploadImageToApp({
+            baseUrl,
+            apiKey: msg.apiKey,
+            imageBytes: msg.imageBytes,
+          });
+          if ('error' in uploaded) {
+            sendResponse(uploaded);
+            return;
+          }
+
+          const createRes = await fetch(`${baseUrl}/api/papercuts`, {
+            method: 'POST',
+            headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
+            body: JSON.stringify({
+              name: msg.name,
+              descriptionHtml: imageAndTextToHtml(uploaded.url, msg.descriptionText ?? ''),
+              screenshotUrl: uploaded.url,
+            }),
+          });
+          if (!createRes.ok) {
+            sendResponse({ error: 'Create failed' });
+            return;
+          }
+          const created = (await createRes.json()) as { item: any };
+          sendResponse({ item: created.item });
+          return;
+        }
+
+        if (msg?.type === 'UPLOAD_AND_OPEN_COMPOSER') {
+          console.log('[Papercuts BG] Uploading image...', { baseUrl: msg.baseUrl });
+          try {
+            const uploaded = await uploadImageToApp({
+              baseUrl: msg.baseUrl,
+              apiKey: msg.apiKey,
+              imageBytes: msg.imageBytes,
+            });
+            if ('error' in uploaded) {
+              console.error('[Papercuts BG] Upload failed:', uploaded.error);
+              sendResponse(uploaded);
+              return;
+            }
+
+            console.log('[Papercuts BG] Upload successful, opening Composer window...', { url: uploaded.url });
+            const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+
+            try {
+              const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+              console.log('[Papercuts BG] Composer window opened successfully:', win);
+              sendResponse({ ok: true });
+            } catch (windowErr) {
+              console.error('[Papercuts BG] Failed to create window:', windowErr);
+              console.log('[Papercuts BG] Falling back to tab...');
+              // Fallback: open in new tab if popup fails
+              await browser.tabs.create({ url, active: true });
+              console.log('[Papercuts BG] Composer tab opened');
+              sendResponse({ ok: true });
+            }
+          } catch (err) {
+            console.error('[Papercuts BG] Exception:', err);
+            sendResponse({ error: 'Upload failed: ' + String(err) });
+          }
+          return;
+        }
+
+        if (msg?.type === 'RETARGET_RETAKE_SELECTION') {
+          try {
+            await browser.tabs.update(msg.tabId, { active: true });
+            await browser.tabs.sendMessage(msg.tabId, { type: 'START_SELECTION_OPEN_COMPOSER' });
+            sendResponse({ ok: true });
+          } catch {
+            sendResponse({ error: 'Retake failed' });
+          }
+          return;
+        }
+
+        if (msg?.type === 'CREATE_ONLY') {
+          const baseUrl = normalizeBaseUrl(msg.baseUrl);
+          const createRes = await fetch(`${baseUrl}/api/papercuts`, {
+            method: 'POST',
+            headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
+            body: JSON.stringify({
+              name: msg.name,
+              descriptionHtml: textToHtml(msg.descriptionText ?? ''),
+              screenshotUrl: null,
+            }),
+          });
+          if (!createRes.ok) {
+            sendResponse({ error: 'Create failed' });
+            return;
+          }
+          const created = (await createRes.json()) as { item: any };
+          sendResponse({ item: created.item });
+          return;
         }
       } catch (err) {
-        console.error('[Papercuts BG] Exception:', err);
-        return { error: 'Upload failed: ' + String(err) };
+        console.error('[Papercuts BG] Unexpected error:', err);
+        sendResponse({ error: String(err) });
       }
-    }
+    })();
 
-    if (msg?.type === 'RETARGET_RETAKE_SELECTION') {
-      try {
-        await browser.tabs.update(msg.tabId, { active: true });
-        await browser.tabs.sendMessage(msg.tabId, { type: 'START_SELECTION_OPEN_COMPOSER' });
-        return { ok: true };
-      } catch {
-        return { error: 'Retake failed' };
-      }
-    }
-
-    if (msg?.type === 'CREATE_ONLY') {
-      const baseUrl = normalizeBaseUrl(msg.baseUrl);
-      const createRes = await fetch(`${baseUrl}/api/papercuts`, {
-        method: 'POST',
-        headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
-        body: JSON.stringify({
-          name: msg.name,
-          descriptionHtml: textToHtml(msg.descriptionText ?? ''),
-          screenshotUrl: null,
-        }),
-      });
-      if (!createRes.ok) {
-        return { error: 'Create failed' };
-      }
-      const created = (await createRes.json()) as { item: any };
-      return { item: created.item };
-    }
+    // Return true to indicate we'll respond asynchronously
+    return true;
   });
 
   browser.commands.onCommand.addListener(async (command) => {
