@@ -6,6 +6,18 @@ async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
   return await res.arrayBuffer();
 }
 
+function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
+  const trimmed = (code ?? '').trim();
+  if (!trimmed) return null;
+  if (!trimmed.startsWith('papercuts:')) return null;
+  const rest = trimmed.slice('papercuts:'.length);
+  const [baseUrlRaw, apiKeyRaw] = rest.split('#');
+  const baseUrl = (baseUrlRaw ?? '').trim().replace(/\/+$/, '');
+  const apiKey = (apiKeyRaw ?? '').trim();
+  if (!baseUrl || !apiKey) return null;
+  return { baseUrl, apiKey };
+}
+
 function isRestrictedUrl(url: string | undefined) {
   if (!url) return true;
   return (
@@ -21,8 +33,10 @@ function App() {
   const [step, setStep] = useState<
     'choose' | 'scratch' | 'screenshot-method'
   >('choose');
-  const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
-  const [apiKey, setApiKey] = useState('');
+  const [connectCode, setConnectCode] = useState('');
+  const parsed = parseConnectCode(connectCode);
+  const baseUrl = parsed?.baseUrl ?? '';
+  const apiKey = parsed?.apiKey ?? '';
   const [name, setName] = useState('New papercut');
   const [descriptionText, setDescriptionText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -33,11 +47,9 @@ function App() {
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
 
   useEffect(() => {
-    browser.storage.local.get(['papercuts_baseUrl', 'papercuts_apiKey']).then((res) => {
-      const v = res['papercuts_baseUrl'];
-      if (typeof v === 'string' && v.trim()) setBaseUrl(v);
-      const k = res['papercuts_apiKey'];
-      if (typeof k === 'string') setApiKey(k);
+    browser.storage.local.get(['papercuts_connect']).then((res) => {
+      const c = res['papercuts_connect'];
+      if (typeof c === 'string') setConnectCode(c);
     });
 
     browser.tabs
@@ -60,8 +72,7 @@ function App() {
 
   const saveSettings = async () => {
     await browser.storage.local.set({
-      papercuts_baseUrl: baseUrl,
-      papercuts_apiKey: apiKey,
+      papercuts_connect: connectCode,
     });
   };
 
@@ -79,6 +90,10 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
+      if (!parsed) {
+        setError('Paste the Connect code from the web app first.');
+        return;
+      }
       await saveSettings();
       const res = (await browser.runtime.sendMessage({
         type: 'CREATE_ONLY',
@@ -100,6 +115,10 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
+      if (!parsed) {
+        setError('Paste the Connect code from the web app first.');
+        return;
+      }
       await saveSettings();
       const [tab] = await browser.tabs.query({
         active: true,
@@ -135,6 +154,10 @@ function App() {
     if (isSaving) return;
     setIsSaving(true);
     try {
+      if (!parsed) {
+        setError('Paste the Connect code from the web app first.');
+        return;
+      }
       await saveSettings();
       if (isRestrictedUrl(activeTabUrl ?? undefined)) {
         setError('Can’t capture on this page. Open any normal website tab and try again.');
@@ -172,22 +195,24 @@ function App() {
           <div className="sub">Create from scratch or from a screenshot.</div>
 
           <div className="field">
-            <div className="label">Web app URL</div>
+            <div className="label">Connect code</div>
             <input
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="https://your-app.vercel.app"
+              value={connectCode}
+              onChange={(e) => {
+                const v = e.target.value;
+                setConnectCode(v);
+                // persist immediately so it never “disappears”
+                void browser.storage.local.set({ papercuts_connect: v });
+              }}
+              placeholder="Copy from web app → Extension API key → Connect code"
             />
           </div>
 
-          <div className="field">
-            <div className="label">API key</div>
-            <input
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Copy from the web app “Extension API key”"
-            />
-          </div>
+          {parsed ? (
+            <div className="hint">Connected to: {baseUrl}</div>
+          ) : (
+            <div className="hint">Paste the connect code to enable capture + create.</div>
+          )}
 
           <div className="tiles">
             <button

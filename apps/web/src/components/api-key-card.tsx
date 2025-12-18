@@ -11,6 +11,7 @@ export function ApiKeyCard() {
   const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(true);
   const [rotating, setRotating] = React.useState(false);
+  const [origin, setOrigin] = React.useState<string>("");
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -27,14 +28,27 @@ export function ApiKeyCard() {
   }, []);
 
   React.useEffect(() => {
+    setOrigin(window.location.origin);
     void load();
   }, [load]);
+
+  const connectCode = key && origin ? `papercuts:${origin}#${key}` : "";
 
   const copy = async () => {
     if (!key) return;
     try {
       await navigator.clipboard.writeText(key);
       toast.success("API key copied");
+    } catch {
+      toast.error("Couldn’t copy");
+    }
+  };
+
+  const copyConnectCode = async () => {
+    if (!connectCode) return;
+    try {
+      await navigator.clipboard.writeText(connectCode);
+      toast.success("Connect code copied");
     } catch {
       toast.error("Couldn’t copy");
     }
@@ -77,6 +91,22 @@ export function ApiKeyCard() {
 
       <div className="mt-3">
         <Input value={loading ? "Loading…" : key} readOnly className="h-11" />
+      </div>
+
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[18px] font-semibold">Connect code</div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            Paste this into the extension once. It includes the app URL + API key.
+          </div>
+        </div>
+        <Button onClick={copyConnectCode} disabled={loading || !connectCode}>
+          Copy
+        </Button>
+      </div>
+
+      <div className="mt-3">
+        <Input value={loading ? "Loading…" : connectCode} readOnly className="h-11" />
       </div>
     </Card>
   );
