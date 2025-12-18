@@ -33,7 +33,7 @@ function imageAndTextToHtml(imageUrl: string, text: string) {
 
 export default function Composer() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const screenshotUrl = params.get('screenshotUrl') ?? '';
+  const screenshotKey = params.get('screenshotKey') ?? '';
   const sourceTabId = params.get('sourceTabId') ?? '';
 
   const [connectCode, setConnectCode] = useState('');
@@ -46,13 +46,37 @@ export default function Composer() {
   const [isSaving, setIsSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string>('');
+  const [screenshotBytes, setScreenshotBytes] = useState<Uint8Array | null>(null);
 
   useEffect(() => {
-    browser.storage.local.get(['papercuts_connect']).then((res) => {
+    browser.storage.local.get(['papercuts_connect', 'pending_screenshot_bytes']).then((res) => {
       const c = res['papercuts_connect'];
       if (typeof c === 'string') setConnectCode(c);
+
+      const bytes = res['pending_screenshot_bytes'];
+      if (Array.isArray(bytes)) {
+        const uint8 = new Uint8Array(bytes);
+        setScreenshotBytes(uint8);
+
+        // Convert to data URL for preview
+        const blob = new Blob([uint8], { type: 'image/png' });
+        const reader = new FileReader();
+        reader.onloadend = () => setScreenshotDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+      }
     });
-  }, []);
+
+    // Also try to get from session storage if available
+    if (screenshotKey) {
+      browser.storage.session.get([screenshotKey]).then((res) => {
+        const dataUrl = res[screenshotKey];
+        if (typeof dataUrl === 'string') {
+          setScreenshotDataUrl(dataUrl);
+        }
+      });
+    }
+  }, [screenshotKey]);
 
   const onChangeConnect = (v: string) => {
     setConnectCode(v);
@@ -71,8 +95,33 @@ export default function Composer() {
     }
     setIsSaving(true);
     try {
-      const descriptionHtml = screenshotUrl
-        ? imageAndTextToHtml(screenshotUrl, descriptionText)
+      let uploadedUrl: string | null = null;
+
+      // Upload screenshot if we have one
+      if (screenshotBytes) {
+        const imageBlob = new Blob([screenshotBytes], { type: 'image/png' });
+        const form = new FormData();
+        form.set('file', imageBlob, 'papercut.png');
+
+        const uploadRes = await fetch(`${baseUrl}/api/uploads`, {
+          method: 'POST',
+          headers: {
+            'x-papercuts-key': apiKey,
+          },
+          body: form,
+        });
+
+        if (!uploadRes.ok) {
+          setError('Screenshot upload failed. Check your connection and try again.');
+          return;
+        }
+
+        const uploadJson = (await uploadRes.json()) as { url: string };
+        uploadedUrl = uploadJson.url;
+      }
+
+      const descriptionHtml = uploadedUrl
+        ? imageAndTextToHtml(uploadedUrl, descriptionText)
         : textToHtml(descriptionText);
 
       const res = await fetch(`${baseUrl}/api/papercuts`, {
@@ -84,13 +133,19 @@ export default function Composer() {
         body: JSON.stringify({
           name: name.trim(),
           descriptionHtml,
-          screenshotUrl: screenshotUrl || null,
+          screenshotUrl: uploadedUrl,
         }),
       });
 
       if (!res.ok) {
         setError('Create failed. Check your Connect code and try again.');
         return;
+      }
+
+      // Clean up stored screenshot
+      await browser.storage.local.remove(['pending_screenshot_bytes']);
+      if (screenshotKey) {
+        await browser.storage.session.remove([screenshotKey]);
       }
 
       setDone(true);
@@ -124,7 +179,7 @@ export default function Composer() {
     <div className="wrap composer">
       <div className="title">New papercut</div>
       <div className="sub">
-        {screenshotUrl ? 'Screenshot captured — add a name + a bit of context.' : 'Add a name + description.'}
+        {screenshotDataUrl ? 'Screenshot captured — add a name + a bit of context.' : 'Add a name + description.'}
       </div>
 
       <div className="field">
@@ -138,9 +193,9 @@ export default function Composer() {
 
       {parsed ? <div className="hint">Connected to: {baseUrl}</div> : <div className="hint">Not connected yet.</div>}
 
-      {screenshotUrl ? (
+      {screenshotDataUrl ? (
         <div className="preview">
-          <img className="previewImg" src={screenshotUrl} alt="Screenshot preview" />
+          <img className="previewImg" src={screenshotDataUrl} alt="Screenshot preview" />
           <div className="previewActions">
             <button type="button" className="btn" onClick={retake} disabled={isSaving}>
               Retake

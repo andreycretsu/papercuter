@@ -18,11 +18,10 @@ type UploadAndCreateRequest = {
   imageBytes: ArrayBuffer;
 };
 
-type UploadAndOpenFormRequest = {
-  type: 'UPLOAD_AND_OPEN_COMPOSER';
-  baseUrl: string;
-  apiKey?: string;
-  imageBytes: ArrayBuffer;
+type OpenComposerRequest = {
+  type: 'OPEN_COMPOSER';
+  screenshotDataUrl: string;
+  sourceTabId?: number;
 };
 
 type RetakeSelectionRequest = {
@@ -107,7 +106,7 @@ export default defineBackground(() => {
       | CaptureVisibleRequest
       | CaptureVisibleOpenFormRequest
       | UploadAndCreateRequest
-      | UploadAndOpenFormRequest
+      | OpenComposerRequest
       | RetakeSelectionRequest
       | CreateOnlyRequest;
 
@@ -202,38 +201,44 @@ export default defineBackground(() => {
           return;
         }
 
-        if (msg?.type === 'UPLOAD_AND_OPEN_COMPOSER') {
-          console.log('[Papercuts BG] Uploading image...', { baseUrl: msg.baseUrl });
+        if (msg?.type === 'OPEN_COMPOSER') {
+          console.log('[Papercuts BG] Opening Composer with screenshot...');
           try {
-            const uploaded = await uploadImageToApp({
-              baseUrl: msg.baseUrl,
-              apiKey: msg.apiKey,
-              imageBytes: msg.imageBytes,
-            });
-            if ('error' in uploaded) {
-              console.error('[Papercuts BG] Upload failed:', uploaded.error);
-              sendResponse(uploaded);
-              return;
+            // Store screenshot data URL temporarily so Composer can access it
+            // We'll pass it via URL hash since data URLs are too long for query params
+            const composerUrl = browser.runtime.getURL('composer.html');
+            const url = new URL(composerUrl);
+            if (typeof msg.sourceTabId === 'number') {
+              url.searchParams.set('sourceTabId', String(msg.sourceTabId));
             }
+            url.searchParams.set('ts', String(Date.now()));
 
-            console.log('[Papercuts BG] Upload successful, opening Composer window...', { url: uploaded.url });
-            const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+            // Store the dataUrl in session storage with a unique key
+            const storageKey = `screenshot_${Date.now()}`;
+            url.searchParams.set('screenshotKey', storageKey);
+
+            // Store screenshot temporarily
+            await browser.storage.session.set({ [storageKey]: msg.screenshotDataUrl });
 
             try {
-              const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+              const win = await browser.windows.create({
+                url: url.toString(),
+                type: 'popup',
+                width: 420,
+                height: 720
+              });
               console.log('[Papercuts BG] Composer window opened successfully:', win);
               sendResponse({ ok: true });
             } catch (windowErr) {
               console.error('[Papercuts BG] Failed to create window:', windowErr);
               console.log('[Papercuts BG] Falling back to tab...');
-              // Fallback: open in new tab if popup fails
-              await browser.tabs.create({ url, active: true });
+              await browser.tabs.create({ url: url.toString(), active: true });
               console.log('[Papercuts BG] Composer tab opened');
               sendResponse({ ok: true });
             }
           } catch (err) {
             console.error('[Papercuts BG] Exception:', err);
-            sendResponse({ error: 'Upload failed: ' + String(err) });
+            sendResponse({ error: 'Failed to open Composer: ' + String(err) });
           }
           return;
         }

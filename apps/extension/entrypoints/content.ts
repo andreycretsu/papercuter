@@ -241,17 +241,30 @@ export default defineContentScript({
           return { error: 'Missing connect code' };
         }
 
-        console.log('[Papercuts] Uploading image and opening Composer...', { baseUrl });
+        console.log('[Papercuts] Opening Composer with screenshot...', { baseUrl });
         try {
+          // Convert imageBytes to data URL for preview
+          const blob = new Blob([imageBytes], { type: 'image/png' });
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+
+          // Store credentials in storage so Composer can use them later
+          await browser.storage.local.set({
+            papercuts_connect: `papercuts:${baseUrl}#${apiKey}`,
+            pending_screenshot_bytes: Array.from(new Uint8Array(imageBytes))
+          });
+
           const res = (await browser.runtime.sendMessage({
-            type: 'UPLOAD_AND_OPEN_COMPOSER',
-            baseUrl,
-            apiKey,
-            imageBytes,
+            type: 'OPEN_COMPOSER',
+            screenshotDataUrl: dataUrl,
+            sourceTabId: (await browser.tabs.getCurrent())?.id
           })) as { ok?: boolean; error?: string };
 
           if (res?.error) {
-            console.error('[Papercuts] Upload/open composer failed:', res.error);
+            console.error('[Papercuts] Failed to open composer:', res.error);
             window.alert(`Papercuts: ${res.error}`);
             return { error: res.error };
           }
@@ -259,8 +272,8 @@ export default defineContentScript({
           console.log('[Papercuts] Composer opened successfully');
           return { ok: true };
         } catch (err) {
-          console.error('[Papercuts] Exception during upload:', err);
-          window.alert('Papercuts: Failed to upload screenshot. Check console for details.');
+          console.error('[Papercuts] Exception:', err);
+          window.alert('Papercuts: Failed to open Composer. Check console for details.');
           return { error: String(err) };
         }
       }
