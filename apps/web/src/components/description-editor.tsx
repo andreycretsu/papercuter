@@ -26,6 +26,8 @@ export function DescriptionEditor(props: {
   onChangeHtml: (html: string) => void;
   className?: string;
 }) {
+  const lastExternalHtmlRef = React.useRef(props.valueHtml || "");
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -105,6 +107,19 @@ export function DescriptionEditor(props: {
       },
     },
   });
+
+  // Keep editor content in sync when parent updates the HTML (e.g. when opening with a prefilled screenshot).
+  React.useEffect(() => {
+    if (!editor) return;
+    const external = props.valueHtml || "";
+    if (external === lastExternalHtmlRef.current) return;
+    lastExternalHtmlRef.current = external;
+
+    const current = editor.getHTML();
+    if (external !== current) {
+      editor.commands.setContent(external, false);
+    }
+  }, [editor, props.valueHtml]);
 
   const toggleLink = () => {
     if (!editor) return;
