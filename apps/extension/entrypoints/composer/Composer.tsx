@@ -167,20 +167,19 @@ export default function Composer() {
     }
   };
 
-  const retake = async () => {
+  const deleteScreenshot = async () => {
     setError(null);
-    if (!sourceTabId) {
-      setError('Cannot retake: missing tab context. Start capture again from the extension.');
-      return;
+    // Clear screenshot from storage
+    await browser.storage.local.remove(['pending_screenshot_bytes']);
+    if (screenshotKey) {
+      await browser.storage.session.remove([screenshotKey]);
     }
-    try {
-      await browser.runtime.sendMessage({
-        type: 'RETARGET_RETAKE_SELECTION',
-        tabId: Number(sourceTabId),
-      });
-      window.close();
-    } catch {
-      setError('Retake failed. Try again.');
+    // Reset state
+    setScreenshotBytes(null);
+    setScreenshotInjected(false);
+    // Clear editor content
+    if (editor) {
+      editor.commands.setContent('');
     }
   };
 
@@ -208,8 +207,13 @@ export default function Composer() {
         <div className="label">Description with screenshot</div>
         <EditorContent editor={editor} />
         {screenshotBytes && (
-          <button type="button" className="btn retake-btn" onClick={retake} disabled={isSaving}>
-            Retake screenshot
+          <button
+            type="button"
+            className="btn btn-destructive retake-btn"
+            onClick={deleteScreenshot}
+            disabled={isSaving}
+          >
+            Delete screenshot
           </button>
         )}
       </div>

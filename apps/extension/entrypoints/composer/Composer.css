@@ -95,4 +95,13 @@
   margin-top: 12px;
 }
 
+.btn-destructive {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-destructive:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
 
