@@ -197,12 +197,19 @@ export default defineContentScript({
         const imageBytes = await selectAreaBytes();
         if (!imageBytes) return { cancelled: true };
 
-        await browser.runtime.sendMessage({
+        const res = (await browser.runtime.sendMessage({
           type: 'UPLOAD_AND_OPEN_FORM',
           baseUrl: msg.baseUrl,
           apiKey: msg.apiKey,
           imageBytes,
-        });
+        })) as { ok?: boolean; error?: string };
+
+        if (res?.error) {
+          // Popup is already closed; show a clear error immediately.
+          window.alert(`Papercuts: ${res.error}`);
+          return { error: res.error };
+        }
+
         return { ok: true };
       }
 

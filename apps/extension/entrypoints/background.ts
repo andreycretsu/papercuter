@@ -63,6 +63,8 @@ function buildNewPapercutUrl(baseUrl: string, screenshotUrl?: string) {
   u.searchParams.set('new', '1');
   if (screenshotUrl) u.searchParams.set('screenshotUrl', screenshotUrl);
   u.searchParams.set('from', 'extension');
+  // Cache-bust so you always get a fresh render when opening repeatedly
+  u.searchParams.set('ts', String(Date.now()));
   return u.toString();
 }
 

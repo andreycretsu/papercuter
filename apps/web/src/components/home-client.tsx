@@ -37,6 +37,18 @@ export function HomeClient(props: {
     const screenshotUrl = params.get("screenshotUrl");
     setPrefillScreenshotUrl(screenshotUrl);
     setOpen(true);
+
+    // Clear params so refresh/back doesn’t keep re-opening the modal.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("new");
+      url.searchParams.delete("screenshotUrl");
+      url.searchParams.delete("from");
+      url.searchParams.delete("ts");
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // ignore
+    }
   }, []);
 
   return (
