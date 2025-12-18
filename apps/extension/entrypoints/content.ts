@@ -15,6 +15,13 @@ type StartSelectionOpenFormMessage = {
   apiKey?: string;
 };
 
+type ShowPreviewModalMessage = {
+  type: 'SHOW_PREVIEW_MODAL';
+  screenshotDataUrl: string;
+  baseUrl: string;
+  apiKey: string;
+};
+
 function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
   const trimmed = (code ?? '').trim();
   if (!trimmed) return null;
@@ -200,6 +207,297 @@ async function selectAreaBytes(): Promise<ArrayBuffer | null> {
   return await promise;
 }
 
+function createPreviewModal(opts: {
+  screenshotDataUrl: string;
+  onConfirm: (editedDataUrl: string) => void;
+  onRetake: () => void;
+}) {
+  // Create modal backdrop
+  const modalBackdrop = document.createElement('div');
+  modalBackdrop.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 2147483646;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  `;
+
+  // Create modal container (80% of screen)
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    width: 80vw;
+    height: 80vh;
+    background: rgba(30, 30, 30, 0.98);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  `;
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = `
+    text-align: center;
+    margin-bottom: 24px;
+    color: white;
+  `;
+  header.innerHTML = `
+    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 8px 0; font-family: system-ui, -apple-system, sans-serif;">Review & Annotate Screenshot</h1>
+    <p style="color: rgba(255, 255, 255, 0.7); margin: 0; font-size: 14px; font-family: system-ui, -apple-system, sans-serif;">Draw on the screenshot to highlight important areas, then confirm or retake.</p>
+  `;
+
+  // Drawing tools
+  const drawingTools = document.createElement('div');
+  drawingTools.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  `;
+
+  const colorPicker = document.createElement('input');
+  colorPicker.type = 'color';
+  colorPicker.value = '#ff0000';
+  colorPicker.style.cssText = `
+    width: 40px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  `;
+
+  const penSizeSlider = document.createElement('input');
+  penSizeSlider.type = 'range';
+  penSizeSlider.min = '1';
+  penSizeSlider.max = '10';
+  penSizeSlider.value = '3';
+  penSizeSlider.style.width = '100px';
+
+  const penSizeLabel = document.createElement('span');
+  penSizeLabel.textContent = '3px';
+  penSizeLabel.style.cssText = 'color: white; font-size: 14px; font-family: system-ui, -apple-system, sans-serif;';
+
+  penSizeSlider.addEventListener('input', () => {
+    penSizeLabel.textContent = `${penSizeSlider.value}px`;
+  });
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Clear Annotations';
+  clearBtn.style.cssText = `
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background 0.2s;
+  `;
+  clearBtn.onmouseover = () => clearBtn.style.background = 'rgba(255, 255, 255, 0.15)';
+  clearBtn.onmouseout = () => clearBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+
+  const colorLabel = document.createElement('label');
+  colorLabel.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+  `;
+  colorLabel.innerHTML = 'Color:';
+  colorLabel.appendChild(colorPicker);
+
+  const sizeLabel = document.createElement('label');
+  sizeLabel.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+  `;
+  sizeLabel.innerHTML = 'Pen Size:';
+  sizeLabel.appendChild(penSizeSlider);
+  sizeLabel.appendChild(penSizeLabel);
+
+  drawingTools.appendChild(colorLabel);
+  drawingTools.appendChild(sizeLabel);
+  drawingTools.appendChild(clearBtn);
+
+  // Canvas container
+  const canvasContainer = document.createElement('div');
+  canvasContainer.style.cssText = `
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    overflow: auto;
+    margin-bottom: 24px;
+  `;
+
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = `
+    max-width: 100%;
+    max-height: 100%;
+    cursor: crosshair;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  `;
+
+  // Load image onto canvas
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(img, 0, 0);
+    }
+  };
+  img.src = opts.screenshotDataUrl;
+
+  canvasContainer.appendChild(canvas);
+
+  // Drawing state
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  const startDrawing = (e: MouseEvent) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    lastX = (e.clientX - rect.left) * scaleX;
+    lastY = (e.clientY - rect.top) * scaleY;
+  };
+
+  const draw = (e: MouseEvent) => {
+    if (!isDrawing) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    ctx.strokeStyle = colorPicker.value;
+    ctx.lineWidth = Number(penSizeSlider.value);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    lastX = x;
+    lastY = y;
+  };
+
+  const stopDrawing = () => {
+    isDrawing = false;
+  };
+
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseleave', stopDrawing);
+
+  clearBtn.addEventListener('click', () => {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    }
+  });
+
+  // Actions
+  const actions = document.createElement('div');
+  actions.style.cssText = `
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  `;
+
+  const retakeBtn = document.createElement('button');
+  retakeBtn.textContent = 'Retake Screenshot';
+  retakeBtn.style.cssText = `
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background 0.2s;
+  `;
+  retakeBtn.onmouseover = () => retakeBtn.style.background = 'rgba(255, 255, 255, 0.15)';
+  retakeBtn.onmouseout = () => retakeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.textContent = 'Confirm & Continue';
+  confirmBtn.style.cssText = `
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #0066cc;
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background 0.2s;
+  `;
+  confirmBtn.onmouseover = () => confirmBtn.style.background = '#0052a3';
+  confirmBtn.onmouseout = () => confirmBtn.style.background = '#0066cc';
+
+  retakeBtn.addEventListener('click', () => {
+    modalBackdrop.remove();
+    opts.onRetake();
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    const editedDataUrl = canvas.toDataURL('image/png');
+    modalBackdrop.remove();
+    opts.onConfirm(editedDataUrl);
+  });
+
+  actions.appendChild(retakeBtn);
+  actions.appendChild(confirmBtn);
+
+  // Assemble modal
+  modal.appendChild(header);
+  modal.appendChild(drawingTools);
+  modal.appendChild(canvasContainer);
+  modal.appendChild(actions);
+  modalBackdrop.appendChild(modal);
+
+  return modalBackdrop;
+}
+
 export default defineContentScript({
   matches: ['<all_urls>'],
   main() {
@@ -207,7 +505,8 @@ export default defineContentScript({
       const msg = message as
         | StartSelectionMessage
         | CaptureAreaMessage
-        | StartSelectionOpenFormMessage;
+        | StartSelectionOpenFormMessage
+        | ShowPreviewModalMessage;
 
       // Popup flow: capture only, return bytes to popup (no auto-create)
       if (msg?.type === 'CAPTURE_AREA') {
@@ -216,7 +515,7 @@ export default defineContentScript({
         return { imageBytes };
       }
 
-      // Popup flow: capture area, upload, then open the extension Composer window
+      // Popup flow: capture area, show preview modal, then open composer
       if (msg?.type === 'START_SELECTION_OPEN_COMPOSER') {
         console.log('[Papercuts] Starting area selection flow...');
         const imageBytes = await selectAreaBytes();
@@ -241,7 +540,7 @@ export default defineContentScript({
           return { error: 'Missing connect code' };
         }
 
-        console.log('[Papercuts] Opening Composer with screenshot...', { baseUrl });
+        console.log('[Papercuts] Showing preview modal...');
         try {
           // Convert imageBytes to data URL for preview
           const blob = new Blob([imageBytes], { type: 'image/png' });
@@ -251,31 +550,76 @@ export default defineContentScript({
             reader.readAsDataURL(blob);
           });
 
-          // Store credentials in storage so Composer can use them later
-          await browser.storage.local.set({
-            papercuts_connect: `papercuts:${baseUrl}#${apiKey}`,
-            pending_screenshot_bytes: Array.from(new Uint8Array(imageBytes))
+          // Show preview modal with screenshot
+          const modal = createPreviewModal({
+            screenshotDataUrl: dataUrl,
+            onConfirm: async (editedDataUrl: string) => {
+              console.log('[Papercuts] Screenshot confirmed, opening Composer...');
+
+              // Convert edited data URL back to bytes
+              const editedBlob = await (await fetch(editedDataUrl)).blob();
+              const editedBytes = new Uint8Array(await editedBlob.arrayBuffer());
+
+              // Store credentials and screenshot
+              await browser.storage.local.set({
+                papercuts_connect: `papercuts:${baseUrl}#${apiKey}`,
+                pending_screenshot_bytes: Array.from(editedBytes)
+              });
+
+              // Open composer in new tab
+              const composerUrl = browser.runtime.getURL('/composer.html');
+              const url = new URL(composerUrl);
+              url.searchParams.set('ts', String(Date.now()));
+              await browser.tabs.create({ url: url.toString(), active: true });
+            },
+            onRetake: async () => {
+              console.log('[Papercuts] Retaking screenshot...');
+              // Restart the flow
+              await browser.runtime.sendMessage({
+                type: 'START_SELECTION_OPEN_COMPOSER',
+                baseUrl,
+                apiKey
+              });
+            }
           });
 
-          // Background script will get tab ID from sender object
-          const res = (await browser.runtime.sendMessage({
-            type: 'OPEN_COMPOSER',
-            screenshotDataUrl: dataUrl
-          })) as { ok?: boolean; error?: string };
-
-          if (res?.error) {
-            console.error('[Papercuts] Failed to open composer:', res.error);
-            window.alert(`Papercuts: ${res.error}`);
-            return { error: res.error };
-          }
-
-          console.log('[Papercuts] Composer opened successfully');
+          document.documentElement.appendChild(modal);
           return { ok: true };
         } catch (err) {
           console.error('[Papercuts] Exception:', err);
-          window.alert('Papercuts: Failed to open Composer. Check console for details.');
+          window.alert('Papercuts: Failed to show preview. Check console for details.');
           return { error: String(err) };
         }
+      }
+
+      // Handle showing preview modal directly (for retakes)
+      if (msg?.type === 'SHOW_PREVIEW_MODAL') {
+        const modal = createPreviewModal({
+          screenshotDataUrl: msg.screenshotDataUrl,
+          onConfirm: async (editedDataUrl: string) => {
+            const editedBlob = await (await fetch(editedDataUrl)).blob();
+            const editedBytes = new Uint8Array(await editedBlob.arrayBuffer());
+
+            await browser.storage.local.set({
+              papercuts_connect: `papercuts:${msg.baseUrl}#${msg.apiKey}`,
+              pending_screenshot_bytes: Array.from(editedBytes)
+            });
+
+            const composerUrl = browser.runtime.getURL('/composer.html');
+            const url = new URL(composerUrl);
+            url.searchParams.set('ts', String(Date.now()));
+            await browser.tabs.create({ url: url.toString(), active: true });
+          },
+          onRetake: async () => {
+            await browser.runtime.sendMessage({
+              type: 'START_SELECTION_OPEN_COMPOSER',
+              baseUrl: msg.baseUrl,
+              apiKey: msg.apiKey
+            });
+          }
+        });
+        document.documentElement.appendChild(modal);
+        return { ok: true };
       }
 
       // Shortcut / legacy flow: capture area and create immediately with defaults
