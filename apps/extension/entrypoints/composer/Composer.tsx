@@ -53,6 +53,7 @@ export default function Composer() {
     },
   });
 
+  // Load connect code and screenshot bytes on mount
   useEffect(() => {
     browser.storage.local.get(['papercuts_connect', 'pending_screenshot_bytes']).then((res) => {
       const c = res['papercuts_connect'];
@@ -62,33 +63,23 @@ export default function Composer() {
       if (Array.isArray(bytes)) {
         const uint8 = new Uint8Array(bytes);
         setScreenshotBytes(uint8);
-
-        // Convert to data URL and inject into editor
-        const blob = new Blob([uint8], { type: 'image/png' });
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUrl = reader.result as string;
-          // Inject screenshot into TipTap editor
-          if (editor && !screenshotInjected) {
-            editor.commands.setContent(`<img src="${dataUrl}" alt="Screenshot" />`);
-            setScreenshotInjected(true);
-          }
-        };
-        reader.readAsDataURL(blob);
       }
     });
+  }, []);
 
-    // Also try to get from session storage if available
-    if (screenshotKey) {
-      browser.storage.session.get([screenshotKey]).then((res) => {
-        const dataUrl = res[screenshotKey];
-        if (typeof dataUrl === 'string' && editor && !screenshotInjected) {
-          editor.commands.setContent(`<img src="${dataUrl}" alt="Screenshot" />`);
-          setScreenshotInjected(true);
-        }
-      });
-    }
-  }, [screenshotKey, editor, screenshotInjected]);
+  // Inject screenshot into editor when both editor and bytes are ready
+  useEffect(() => {
+    if (!editor || !screenshotBytes || screenshotInjected) return;
+
+    const blob = new Blob([screenshotBytes], { type: 'image/png' });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      editor.commands.setContent(`<img src="${dataUrl}" alt="Screenshot" />`);
+      setScreenshotInjected(true);
+    };
+    reader.readAsDataURL(blob);
+  }, [editor, screenshotBytes, screenshotInjected]);
 
   const onChangeConnect = (v: string) => {
     setConnectCode(v);
