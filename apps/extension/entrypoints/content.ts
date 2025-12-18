@@ -170,17 +170,29 @@ async function selectAreaBytes(): Promise<ArrayBuffer | null> {
 
       if (rect.width < 8 || rect.height < 8) return done(null);
 
-      const capture = (await browser.runtime.sendMessage({
-        type: 'CAPTURE_VISIBLE',
-      })) as { dataUrl: string };
+      try {
+        const capture = (await browser.runtime.sendMessage({
+          type: 'CAPTURE_VISIBLE',
+        })) as { dataUrl?: string; error?: string };
 
-      const bytes = await cropToPngBytes({
-        dataUrl: capture.dataUrl,
-        rect,
-        dpr: window.devicePixelRatio || 1,
-      });
+        if (!capture || capture.error || !capture.dataUrl) {
+          console.error('[Papercuts] Capture failed:', capture?.error ?? 'No dataUrl returned');
+          window.alert('Papercuts: Failed to capture screenshot. Please try again.');
+          return done(null);
+        }
 
-      done(bytes);
+        const bytes = await cropToPngBytes({
+          dataUrl: capture.dataUrl,
+          rect,
+          dpr: window.devicePixelRatio || 1,
+        });
+
+        done(bytes);
+      } catch (err) {
+        console.error('[Papercuts] Exception during capture:', err);
+        window.alert('Papercuts: Screenshot capture failed. Please try again.');
+        done(null);
+      }
     },
     true
   );
@@ -206,9 +218,14 @@ export default defineContentScript({
 
       // Popup flow: capture area, upload, then open the extension Composer window
       if (msg?.type === 'START_SELECTION_OPEN_COMPOSER') {
+        console.log('[Papercuts] Starting area selection flow...');
         const imageBytes = await selectAreaBytes();
-        if (!imageBytes) return { cancelled: true };
+        if (!imageBytes) {
+          console.log('[Papercuts] Area selection cancelled');
+          return { cancelled: true };
+        }
 
+        console.log('[Papercuts] Area captured, resolving credentials...');
         let baseUrl = msg.baseUrl;
         let apiKey = msg.apiKey;
         if (!baseUrl || !apiKey) {
@@ -219,24 +236,33 @@ export default defineContentScript({
         }
 
         if (!baseUrl) {
+          console.error('[Papercuts] Missing Connect code');
           window.alert('Papercuts: Missing Connect code. Open the extension popup and paste it first.');
           return { error: 'Missing connect code' };
         }
 
-        const res = (await browser.runtime.sendMessage({
-          type: 'UPLOAD_AND_OPEN_COMPOSER',
-          baseUrl,
-          apiKey,
-          imageBytes,
-        })) as { ok?: boolean; error?: string };
+        console.log('[Papercuts] Uploading image and opening Composer...', { baseUrl });
+        try {
+          const res = (await browser.runtime.sendMessage({
+            type: 'UPLOAD_AND_OPEN_COMPOSER',
+            baseUrl,
+            apiKey,
+            imageBytes,
+          })) as { ok?: boolean; error?: string };
 
-        if (res?.error) {
-          // Popup is already closed; show a clear error immediately.
-          window.alert(`Papercuts: ${res.error}`);
-          return { error: res.error };
+          if (res?.error) {
+            console.error('[Papercuts] Upload/open composer failed:', res.error);
+            window.alert(`Papercuts: ${res.error}`);
+            return { error: res.error };
+          }
+
+          console.log('[Papercuts] Composer opened successfully');
+          return { ok: true };
+        } catch (err) {
+          console.error('[Papercuts] Exception during upload:', err);
+          window.alert('Papercuts: Failed to upload screenshot. Check console for details.');
+          return { error: String(err) };
         }
-
-        return { ok: true };
       }
 
       // Shortcut / legacy flow: capture area and create immediately with defaults

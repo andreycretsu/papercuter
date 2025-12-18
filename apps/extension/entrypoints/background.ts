@@ -105,6 +105,7 @@ export default defineBackground(() => {
       | CreateOnlyRequest;
 
     if (msg?.type === 'CAPTURE_VISIBLE') {
+      console.log('[Papercuts BG] Capturing visible tab...');
       try {
         const windowId =
           typeof msg.windowId === 'number'
@@ -113,9 +114,11 @@ export default defineBackground(() => {
         const dataUrl = await browser.tabs.captureVisibleTab(windowId, {
           format: 'png',
         });
+        console.log('[Papercuts BG] Capture successful, dataUrl length:', dataUrl.length);
         return { dataUrl };
-      } catch {
-        return { error: 'Capture failed' };
+      } catch (err) {
+        console.error('[Papercuts BG] Capture failed:', err);
+        return { error: 'Capture failed: ' + String(err) };
       }
     }
 
@@ -167,16 +170,27 @@ export default defineBackground(() => {
     }
 
     if (msg?.type === 'UPLOAD_AND_OPEN_COMPOSER') {
-      const uploaded = await uploadImageToApp({
-        baseUrl: msg.baseUrl,
-        apiKey: msg.apiKey,
-        imageBytes: msg.imageBytes,
-      });
-      if ('error' in uploaded) return uploaded;
+      console.log('[Papercuts BG] Uploading image...', { baseUrl: msg.baseUrl });
+      try {
+        const uploaded = await uploadImageToApp({
+          baseUrl: msg.baseUrl,
+          apiKey: msg.apiKey,
+          imageBytes: msg.imageBytes,
+        });
+        if ('error' in uploaded) {
+          console.error('[Papercuts BG] Upload failed:', uploaded.error);
+          return uploaded;
+        }
 
-      const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
-      await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-      return { ok: true };
+        console.log('[Papercuts BG] Upload successful, opening Composer window...', { url: uploaded.url });
+        const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+        await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+        console.log('[Papercuts BG] Composer window opened');
+        return { ok: true };
+      } catch (err) {
+        console.error('[Papercuts BG] Exception:', err);
+        return { error: 'Upload failed: ' + String(err) };
+      }
     }
 
     if (msg?.type === 'RETARGET_RETAKE_SELECTION') {
