@@ -36,6 +36,10 @@ type CreateOnlyRequest = {
   descriptionText?: string;
 };
 
+type OpenComposerTabRequest = {
+  type: 'OPEN_COMPOSER_TAB';
+};
+
 function normalizeBaseUrl(url?: string) {
   const trimmed = (url ?? '').trim().replace(/\/+$/, '');
   return trimmed || 'http://localhost:3000';
@@ -107,7 +111,8 @@ export default defineBackground(() => {
       | UploadAndCreateRequest
       | OpenComposerRequest
       | RetakeSelectionRequest
-      | CreateOnlyRequest;
+      | CreateOnlyRequest
+      | OpenComposerTabRequest;
 
     // Handle async messages
     (async () => {
@@ -265,6 +270,22 @@ export default defineBackground(() => {
           }
           const created = (await createRes.json()) as { item: any };
           sendResponse({ item: created.item });
+          return;
+        }
+
+        if (msg?.type === 'OPEN_COMPOSER_TAB') {
+          console.log('[Papercuts BG] Opening Composer tab...');
+          try {
+            const composerUrl = browser.runtime.getURL('composer.html');
+            const url = new URL(composerUrl);
+            url.searchParams.set('ts', String(Date.now()));
+            await browser.tabs.create({ url: url.toString(), active: true });
+            console.log('[Papercuts BG] Composer tab opened');
+            sendResponse({ ok: true });
+          } catch (err) {
+            console.error('[Papercuts BG] Failed to open Composer:', err);
+            sendResponse({ error: 'Failed to open Composer: ' + String(err) });
+          }
           return;
         }
       } catch (err) {

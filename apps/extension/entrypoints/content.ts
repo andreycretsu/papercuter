@@ -566,11 +566,10 @@ export default defineContentScript({
                 pending_screenshot_bytes: Array.from(editedBytes)
               });
 
-              // Open composer in new tab
-              const composerUrl = browser.runtime.getURL('/composer.html');
-              const url = new URL(composerUrl);
-              url.searchParams.set('ts', String(Date.now()));
-              await browser.tabs.create({ url: url.toString(), active: true });
+              // Ask background script to open composer (content scripts can't use tabs API)
+              await browser.runtime.sendMessage({
+                type: 'OPEN_COMPOSER_TAB'
+              });
             },
             onRetake: async () => {
               console.log('[Papercuts] Retaking screenshot...');
@@ -605,10 +604,9 @@ export default defineContentScript({
               pending_screenshot_bytes: Array.from(editedBytes)
             });
 
-            const composerUrl = browser.runtime.getURL('/composer.html');
-            const url = new URL(composerUrl);
-            url.searchParams.set('ts', String(Date.now()));
-            await browser.tabs.create({ url: url.toString(), active: true });
+            await browser.runtime.sendMessage({
+              type: 'OPEN_COMPOSER_TAB'
+            });
           },
           onRetake: async () => {
             await browser.runtime.sendMessage({
