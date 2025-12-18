@@ -38,8 +38,8 @@ type CreateOnlyRequest = {
   descriptionText?: string;
 };
 
-function normalizeBaseUrl(url: string) {
-  const trimmed = url.trim().replace(/\/+$/, '');
+function normalizeBaseUrl(url?: string) {
+  const trimmed = (url ?? '').trim().replace(/\/+$/, '');
   return trimmed || 'http://localhost:3000';
 }
 
@@ -163,8 +163,6 @@ export default defineBackground(() => {
         return { error: 'Create failed' };
       }
       const created = (await createRes.json()) as { item: any };
-
-      await browser.tabs.create({ url: baseUrl });
       return { item: created.item };
     }
 
@@ -206,7 +204,6 @@ export default defineBackground(() => {
         return { error: 'Create failed' };
       }
       const created = (await createRes.json()) as { item: any };
-      await browser.tabs.create({ url: baseUrl });
       return { item: created.item };
     }
   });
@@ -218,6 +215,17 @@ export default defineBackground(() => {
       currentWindow: true,
     });
     if (!tab?.id) return;
-    await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION_OPEN_COMPOSER' });
+    // Prefer sending baseUrl/apiKey (but content script also has a fallback to storage).
+    const stored = await browser.storage.local.get(['papercuts_connect']);
+    const connect = typeof stored['papercuts_connect'] === 'string' ? stored['papercuts_connect'] : '';
+    let baseUrl: string | undefined = undefined;
+    let apiKey: string | undefined = undefined;
+    if (connect.startsWith('papercuts:')) {
+      const rest = connect.slice('papercuts:'.length);
+      const [b, k] = rest.split('#');
+      if (b?.trim()) baseUrl = b.trim();
+      if (k?.trim()) apiKey = k.trim();
+    }
+    await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION_OPEN_COMPOSER', baseUrl, apiKey });
   });
 });

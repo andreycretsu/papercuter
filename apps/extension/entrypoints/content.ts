@@ -10,10 +10,22 @@ type CaptureAreaMessage = {
 };
 
 type StartSelectionOpenFormMessage = {
-  type: 'START_SELECTION_OPEN_FORM';
-  baseUrl: string;
+  type: 'START_SELECTION_OPEN_COMPOSER';
+  baseUrl?: string;
   apiKey?: string;
 };
+
+function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
+  const trimmed = (code ?? '').trim();
+  if (!trimmed) return null;
+  if (!trimmed.startsWith('papercuts:')) return null;
+  const rest = trimmed.slice('papercuts:'.length);
+  const [baseUrlRaw, apiKeyRaw] = rest.split('#');
+  const baseUrl = (baseUrlRaw ?? '').trim().replace(/\/+$/, '');
+  const apiKey = (apiKeyRaw ?? '').trim();
+  if (!baseUrl || !apiKey) return null;
+  return { baseUrl, apiKey };
+}
 
 function createOverlay() {
   const overlay = document.createElement('div');
@@ -197,10 +209,24 @@ export default defineContentScript({
         const imageBytes = await selectAreaBytes();
         if (!imageBytes) return { cancelled: true };
 
+        let baseUrl = msg.baseUrl;
+        let apiKey = msg.apiKey;
+        if (!baseUrl || !apiKey) {
+          const stored = await browser.storage.local.get(['papercuts_connect']);
+          const parsed = parseConnectCode(typeof stored['papercuts_connect'] === 'string' ? stored['papercuts_connect'] : '');
+          baseUrl = baseUrl ?? parsed?.baseUrl;
+          apiKey = apiKey ?? parsed?.apiKey;
+        }
+
+        if (!baseUrl) {
+          window.alert('Papercuts: Missing Connect code. Open the extension popup and paste it first.');
+          return { error: 'Missing connect code' };
+        }
+
         const res = (await browser.runtime.sendMessage({
           type: 'UPLOAD_AND_OPEN_COMPOSER',
-          baseUrl: msg.baseUrl,
-          apiKey: msg.apiKey,
+          baseUrl,
+          apiKey,
           imageBytes,
         })) as { ok?: boolean; error?: string };
 
