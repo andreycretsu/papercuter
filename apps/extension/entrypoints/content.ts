@@ -257,10 +257,10 @@ export default defineContentScript({
             pending_screenshot_bytes: Array.from(new Uint8Array(imageBytes))
           });
 
+          // Background script will get tab ID from sender object
           const res = (await browser.runtime.sendMessage({
             type: 'OPEN_COMPOSER',
-            screenshotDataUrl: dataUrl,
-            sourceTabId: (await browser.tabs.getCurrent())?.id
+            screenshotDataUrl: dataUrl
           })) as { ok?: boolean; error?: string };
 
           if (res?.error) {

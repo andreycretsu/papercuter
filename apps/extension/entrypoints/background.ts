@@ -21,7 +21,6 @@ type UploadAndCreateRequest = {
 type OpenComposerRequest = {
   type: 'OPEN_COMPOSER';
   screenshotDataUrl: string;
-  sourceTabId?: number;
 };
 
 type RetakeSelectionRequest = {
@@ -205,11 +204,12 @@ export default defineBackground(() => {
           console.log('[Papercuts BG] Opening Composer with screenshot...');
           try {
             // Store screenshot data URL temporarily so Composer can access it
-            // We'll pass it via URL hash since data URLs are too long for query params
             const composerUrl = browser.runtime.getURL('composer.html');
             const url = new URL(composerUrl);
-            if (typeof msg.sourceTabId === 'number') {
-              url.searchParams.set('sourceTabId', String(msg.sourceTabId));
+
+            // Get source tab ID from sender
+            if (sender.tab?.id) {
+              url.searchParams.set('sourceTabId', String(sender.tab.id));
             }
             url.searchParams.set('ts', String(Date.now()));
 
@@ -218,7 +218,9 @@ export default defineBackground(() => {
             url.searchParams.set('screenshotKey', storageKey);
 
             // Store screenshot temporarily
+            console.log('[Papercuts BG] Storing screenshot in session storage...');
             await browser.storage.session.set({ [storageKey]: msg.screenshotDataUrl });
+            console.log('[Papercuts BG] Screenshot stored successfully');
 
             try {
               const win = await browser.windows.create({
