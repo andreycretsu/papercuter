@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,18 +11,21 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
     setPasswordError(null);
+    setConfirmPasswordError(null);
 
     if (!email.trim()) {
       setEmailError("Email is required.");
@@ -35,25 +37,40 @@ export default function LoginPage() {
       return;
     }
 
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (result?.error) {
-        setPasswordError("Invalid email or password. Please try again.");
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          setEmailError("This email is already registered.");
+        } else {
+          toast.error(data.error || "Sign up failed");
+        }
         setIsLoading(false);
         return;
       }
 
-      toast.success("Logged in successfully");
-      router.push("/");
-      router.refresh();
+      toast.success("Account created successfully! Please sign in.");
+      router.push("/login");
     } catch {
-      toast.error("Login failed");
+      toast.error("Sign up failed");
       setIsLoading(false);
     }
   };
@@ -63,13 +80,13 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border border-border p-8">
         <div className="space-y-6">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">Papercuts</h1>
+            <h1 className="text-3xl font-bold">Create Account</h1>
             <p className="text-sm text-muted-foreground">
-              Sign in to access your papercuts
+              Sign up to start using Papercuts
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -111,9 +128,11 @@ export default function LoginPage() {
                 onBlur={() => {
                   if (!password.trim()) {
                     setPasswordError("Password is required.");
+                  } else if (password.length < 8) {
+                    setPasswordError("Password must be at least 8 characters.");
                   }
                 }}
-                placeholder="Enter password"
+                placeholder="Create password (min 8 characters)"
                 className={passwordError ? "border-destructive" : ""}
               />
               {passwordError && (
@@ -121,15 +140,40 @@ export default function LoginPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (confirmPasswordError && e.target.value.trim()) {
+                    setConfirmPasswordError(null);
+                  }
+                }}
+                onBlur={() => {
+                  if (password && confirmPassword && password !== confirmPassword) {
+                    setConfirmPasswordError("Passwords do not match.");
+                  }
+                }}
+                placeholder="Confirm your password"
+                className={confirmPasswordError ? "border-destructive" : ""}
+              />
+              {confirmPasswordError && (
+                <p className="text-sm text-destructive">{confirmPasswordError}</p>
+              )}
+            </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
           <div className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
             </Link>
           </div>
         </div>

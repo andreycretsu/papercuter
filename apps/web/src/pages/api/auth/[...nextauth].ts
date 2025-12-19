@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { getSupabaseAdmin } from "@/server/supabase-admin";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -10,22 +11,40 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Simple credential check - in production, use a database
-        const validEmail = process.env.PAPERCUTS_EMAIL || "admin@papercuts.dev";
-        const validPassword = process.env.PAPERCUTS_PASSWORD || "papercuts2024";
-
-        if (
-          credentials?.email === validEmail &&
-          credentials?.password === validPassword
-        ) {
-          return {
-            id: "1",
-            email: validEmail,
-            name: "Admin",
-          };
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
 
-        return null;
+        const supabase = getSupabaseAdmin();
+
+        // Get user from database
+        const { data: user, error } = await supabase
+          .from("users")
+          .select("id, email, password_hash")
+          .eq("email", credentials.email)
+          .single();
+
+        if (error || !user) {
+          return null;
+        }
+
+        // Hash the provided password using SHA-256
+        const encoder = new TextEncoder();
+        const data = encoder.encode(credentials.password);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // Compare hashed password
+        if (passwordHash !== user.password_hash) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.email.split('@')[0],
+        };
       },
     }),
   ],
