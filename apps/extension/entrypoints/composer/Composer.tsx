@@ -129,6 +129,7 @@ export default function Composer() {
 
       // Upload screenshot if we have one
       if (screenshotBytes) {
+        console.log('[Papercuts] Starting screenshot upload...');
         const imageBlob = new Blob([screenshotBytes], { type: 'image/png' });
         const form = new FormData();
         form.set('file', imageBlob, 'papercut.png');
@@ -141,13 +142,18 @@ export default function Composer() {
           body: form,
         });
 
+        console.log('[Papercuts] Upload response status:', uploadRes.status);
+
         if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error('[Papercuts] Upload failed:', errorText);
           setError('Screenshot upload failed. Check your connection and try again.');
           return;
         }
 
         const uploadJson = (await uploadRes.json()) as { url: string };
         uploadedUrl = uploadJson.url;
+        console.log('[Papercuts] Screenshot uploaded:', uploadedUrl);
       }
 
       // Get HTML from TipTap editor and replace data URL with uploaded URL
@@ -160,6 +166,7 @@ export default function Composer() {
         );
       }
 
+      console.log('[Papercuts] Creating papercut...');
       const res = await fetch(`${baseUrl}/api/papercuts`, {
         method: 'POST',
         headers: {
@@ -173,7 +180,11 @@ export default function Composer() {
         }),
       });
 
+      console.log('[Papercuts] Create response status:', res.status);
+
       if (!res.ok) {
+        const errorText = await res.text();
+        console.error('[Papercuts] Create failed:', errorText);
         setError('Create failed. Check your Connect code and try again.');
         return;
       }
@@ -184,10 +195,12 @@ export default function Composer() {
         await browser.storage.session.remove([screenshotKey]);
       }
 
+      console.log('[Papercuts] Papercut created successfully');
       setDone(true);
       // Close tab after a moment
       setTimeout(() => window.close(), 350);
-    } catch {
+    } catch (err) {
+      console.error('[Papercuts] Error creating papercut:', err);
       setError('Create failed. Check your connection and try again.');
     } finally {
       setIsSaving(false);

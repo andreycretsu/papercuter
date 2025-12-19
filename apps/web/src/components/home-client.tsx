@@ -96,29 +96,31 @@ export function HomeClient(props: {
         ) : (
           <div className="grid gap-4">
             {items.map((p) => (
-              <Card key={p.id} className="border border-border p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="truncate text-[18px] font-semibold">
-                      {p.name}
+              <Link key={p.id} href={`/papercuts/${p.id}`}>
+                <Card className="border border-border p-4 hover:bg-accent transition-colors cursor-pointer">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="truncate text-[18px] font-semibold">
+                        {p.name}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {new Date(p.createdAt).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {new Date(p.createdAt).toLocaleString()}
-                    </div>
+                    {p.screenshotUrl ? (
+                      <div className="relative h-16 w-28 overflow-hidden rounded-md border border-border flex-shrink-0">
+                        <Image
+                          src={p.screenshotUrl}
+                          alt=""
+                          width={280}
+                          height={160}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    ) : null}
                   </div>
-                  {p.screenshotUrl ? (
-                    <div className="relative h-16 w-28 overflow-hidden rounded-md border border-border">
-                      <Image
-                        src={p.screenshotUrl}
-                        alt=""
-                        width={280}
-                        height={160}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

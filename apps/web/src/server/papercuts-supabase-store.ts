@@ -34,6 +34,25 @@ export async function listPapercutsSupabase(): Promise<Papercut[]> {
   }));
 }
 
+export async function getPapercutById(id: string): Promise<Papercut | null> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("papercuts")
+    .select("id,name,description_html,screenshot_url,created_at")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+  const r = data as DbRow;
+  return {
+    id: r.id,
+    name: r.name,
+    descriptionHtml: r.description_html ?? "",
+    screenshotUrl: r.screenshot_url,
+    createdAt: r.created_at,
+  };
+}
+
 export async function createPapercutSupabase(input: {
   name: string;
   descriptionHtml: string;

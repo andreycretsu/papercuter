@@ -19,6 +19,7 @@ function ensureCloudinaryConfigured() {
 }
 
 export async function POST(req: Request) {
+  console.log('[Papercuts API] Upload request received');
   const unauthorized = await requirePapercutsApiKey(req);
   if (unauthorized) return unauthorized;
 
@@ -31,17 +32,22 @@ export async function POST(req: Request) {
 
   try {
     ensureCloudinaryConfigured();
+    console.log('[Papercuts API] Starting Cloudinary upload, file size:', file.size);
     const arrayBuffer = await file.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const dataUri = `data:${file.type || "image/png"};base64,${base64}`;
 
+    const startTime = Date.now();
     const uploaded = await cloudinary.uploader.upload(dataUri, {
       folder: "papercuts",
       resource_type: "image",
     });
+    const uploadTime = Date.now() - startTime;
 
+    console.log(`[Papercuts API] Upload completed in ${uploadTime}ms:`, uploaded.secure_url);
     return NextResponse.json({ url: uploaded.secure_url });
   } catch (e) {
+    console.error('[Papercuts API] Upload failed:', e);
     return NextResponse.json(
       { error: "Upload failed" },
       { status: 500 }
