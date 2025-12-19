@@ -1,10 +1,10 @@
-# Authentication Setup
+# Authentication Setup - NextAuth.js v4
 
-This app uses NextAuth.js v5 for secure authentication with bcrypt password hashing.
+This app uses NextAuth.js v4 (stable) for reliable, production-ready authentication.
 
 ## Quick Start
 
-### 1. Generate AUTH_SECRET
+### 1. Generate NEXTAUTH_SECRET
 
 ```bash
 openssl rand -base64 32
@@ -12,87 +12,87 @@ openssl rand -base64 32
 
 Add to `.env.local`:
 ```
-AUTH_SECRET=<your-generated-secret>
+NEXTAUTH_SECRET=<your-generated-secret>
 ```
 
-### 2. Set Password Hash (Optional)
+### 2. Set Your Production URL
 
-The default password is `papercuts2024`. To use a custom password:
+For local development:
+```
+NEXTAUTH_URL=http://localhost:3000
+```
+
+For production (add to Vercel):
+```
+NEXTAUTH_URL=https://your-domain.vercel.app
+```
+
+### 3. Set Credentials
+
+Default login credentials (change in production!):
 
 ```bash
-node scripts/generate-password-hash.js your-custom-password
+PAPERCUTS_EMAIL=admin@papercuts.dev
+PAPERCUTS_PASSWORD=papercuts2024
 ```
 
-Copy the generated hash to `.env.local`:
-```
-PAPERCUTS_PASSWORD_HASH=<generated-hash>
-```
+## Vercel Environment Variables
 
-### 3. Default Credentials
+Add these to Vercel → Settings → Environment Variables:
 
-**Email:** `admin@papercuts.dev`
-**Password:** `papercuts2024`
+1. `NEXTAUTH_SECRET` = `KW6En9gwGH9n5lsJSvULkvyAp82TyombO+WHXMLjDMU=`
+2. `NEXTAUTH_URL` = `https://your-app.vercel.app`
+3. `PAPERCUTS_EMAIL` = `admin@papercuts.dev`
+4. `PAPERCUTS_PASSWORD` = `papercuts2024` (change this!)
 
 ## Security Features
 
-✅ **Password Hashing** - Passwords are hashed with bcrypt (10 rounds)
-✅ **JWT Sessions** - Secure, server-side session management
-✅ **Protected Routes** - Middleware protects all routes automatically
-✅ **30-Day Sessions** - Long-lived sessions with automatic refresh
+✅ **JWT Sessions** - Secure, stateless authentication
+✅ **Protected Routes** - Middleware guards all pages
+✅ **CSRF Protection** - Built-in with NextAuth
+✅ **Edge Runtime Compatible** - Works on Vercel Edge
+✅ **30-Day Sessions** - Automatic refresh
 
-## Adding More Users
+## Changing Password
 
-Edit `apps/web/src/auth.ts` and add users to the `users` array:
+Simply update the environment variable:
 
-```typescript
-const users = [
-  {
-    id: "1",
-    email: "admin@papercuts.dev",
-    name: "Admin",
-    passwordHash: "$2b$10$...", // Use generate-password-hash.js
-  },
-  {
-    id: "2",
-    email: "user@example.com",
-    name: "User",
-    passwordHash: "$2b$10$...",
-  },
-];
+```bash
+PAPERCUTS_PASSWORD=your-new-secure-password
 ```
 
-## Upgrading to Database Authentication
+## Production Security Checklist
 
-For production with multiple users, replace the in-memory users array with a database query:
+- [ ] Change `PAPERCUTS_PASSWORD` from default
+- [ ] Use strong password (16+ characters)
+- [ ] Set `NEXTAUTH_URL` to your production domain
+- [ ] Generate new `NEXTAUTH_SECRET` (don't reuse this one)
+- [ ] Consider adding 2FA for production
+- [ ] Rotate secrets regularly
+
+## Why NextAuth v4?
+
+- ✅ Production-stable (not beta)
+- ✅ Edge Runtime compatible
+- ✅ No bcrypt dependency issues
+- ✅ Widely used and tested
+- ✅ Active maintenance
+
+## Upgrading to Database Auth
+
+For production with multiple users, replace the credential check with a database query:
 
 ```typescript
 async authorize(credentials) {
-  // Query your database
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: credentials.email }
   });
 
   if (!user) return null;
 
-  const isValid = await bcrypt.compare(
-    credentials.password,
-    user.passwordHash
-  );
+  const valid = await compare(credentials.password, user.passwordHash);
+  if (!valid) return null;
 
-  if (!isValid) return null;
-
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-  };
+  return { id: user.id, email: user.email, name: user.name };
 }
 ```
-
-## Why NextAuth.js?
-
-- ✅ Industry standard authentication library
-- ✅ Built-in CSRF protection
-- ✅ Secure session management
-- ✅ Easy to extend (OAuth, magic links, etc.)
-- ✅ Active maintenance and security updates
