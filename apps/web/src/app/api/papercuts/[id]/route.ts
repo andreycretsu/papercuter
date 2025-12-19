@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
-import { requirePapercutsApiKey } from "@/server/require-papercuts-api-key";
+import { requirePapercutsApiKey } from "@/server/api-key";
 
 export async function DELETE(
   req: NextRequest,
