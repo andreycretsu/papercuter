@@ -3,6 +3,7 @@ import { defineConfig } from 'wxt';
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
+  publicDir: 'public',
   manifest: {
     name: 'Papercuts',
     description: 'Capture a selected area of the screen and create a papercut',

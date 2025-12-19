@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ApiKeyCard } from "@/components/api-key-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ExtensionVersion } from "@/components/extension-version";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default function SettingsPage() {
             <br />
             4. Select the unzipped folder
           </p>
+          <ExtensionVersion />
         </Card>
       </div>
     </div>
