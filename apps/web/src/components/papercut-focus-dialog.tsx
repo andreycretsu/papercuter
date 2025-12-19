@@ -31,6 +31,7 @@ export function PapercutFocusDialog(props: {
   }) => void;
 }) {
   const [name, setName] = React.useState("");
+  const [nameError, setNameError] = React.useState<string | null>(null);
   const [descriptionHtml, setDescriptionHtml] = React.useState("");
   const [screenshotUrl, setScreenshotUrl] = React.useState<string | null>(
     props.initialScreenshotUrl ?? null
@@ -54,8 +55,10 @@ export function PapercutFocusDialog(props: {
 
   const create = async () => {
     if (isSaving) return;
+    setNameError(null);
+
     if (!name.trim()) {
-      toast.error("Name is required");
+      setNameError("Name is required.");
       return;
     }
 
@@ -135,11 +138,24 @@ export function PapercutFocusDialog(props: {
             <Input
               id="papercut-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError && e.target.value.trim()) {
+                  setNameError(null);
+                }
+              }}
+              onBlur={() => {
+                if (!name.trim()) {
+                  setNameError("Name is required.");
+                }
+              }}
               placeholder="Short title"
-              className="h-11 text-[18px]"
+              className={`h-11 text-[18px] ${nameError ? 'border-destructive' : ''}`}
               autoFocus
             />
+            {nameError && (
+              <p className="text-sm text-destructive">{nameError}</p>
+            )}
           </div>
 
           <div className="grid gap-2">

@@ -32,6 +32,7 @@ export default function Composer() {
   const apiKey = parsed?.apiKey ?? '';
 
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,12 +116,14 @@ export default function Composer() {
 
   const create = async () => {
     setError(null);
+    setNameError(null);
+
     if (!parsed) {
       setError('Paste the Connect code from the web app first.');
       return;
     }
     if (!name.trim()) {
-      setError('Add a name.');
+      setNameError('Name is required.');
       return;
     }
     setIsSaving(true);
@@ -240,9 +243,23 @@ export default function Composer() {
           <Input
             id="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (nameError && e.target.value.trim()) {
+                setNameError(null);
+              }
+            }}
+            onBlur={() => {
+              if (!name.trim()) {
+                setNameError('Name is required.');
+              }
+            }}
             placeholder="What's the papercut?"
+            className={nameError ? 'border-destructive' : ''}
           />
+          {nameError && (
+            <p className="text-sm text-destructive">{nameError}</p>
+          )}
         </div>
 
         <div className="space-y-2">

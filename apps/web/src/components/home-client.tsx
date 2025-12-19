@@ -18,14 +18,61 @@ export function HomeClient(props: {
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<Papercut[]>(props.initialPapercuts);
   const [prefillScreenshotUrl, setPrefillScreenshotUrl] = React.useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const refresh = async () => {
     try {
       const res = await fetch("/api/papercuts");
       const data = (await res.json()) as { items: Papercut[] };
       setItems(data.items ?? []);
+      setSelectedIds(new Set());
     } catch {
-      toast.error("Couldn’t load papercuts");
+      toast.error("Couldn't load papercuts");
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((p) => p.id)));
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0 || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/papercuts/bulk-delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete");
+      }
+
+      toast.success(`Deleted ${selectedIds.size} papercut${selectedIds.size > 1 ? 's' : ''}`);
+      await refresh();
+    } catch {
+      toast.error("Couldn't delete papercuts");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -72,6 +119,21 @@ export function HomeClient(props: {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {selectedIds.size > 0 && (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {selectedIds.size} selected
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={bulkDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete selected"}
+                </Button>
+              </>
+            )}
             <Link href="/settings">
               <Button variant="outline" className="h-10">
                 Settings
@@ -94,34 +156,58 @@ export function HomeClient(props: {
             </div>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {items.map((p) => (
-              <Link key={p.id} href={`/papercuts/${p.id}`}>
-                <Card className="border border-border p-4 hover:bg-accent transition-colors cursor-pointer">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="truncate text-[18px] font-semibold">
-                        {p.name}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedIds.size === items.length && items.length > 0}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span className="text-sm text-muted-foreground">
+                Select all
+              </span>
+            </div>
+            <div className="grid gap-4">
+              {items.map((p) => (
+                <div key={p.id} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelection(p.id);
+                    }}
+                    className="mt-5 h-4 w-4 rounded border-border flex-shrink-0"
+                  />
+                  <Link href={`/papercuts/${p.id}`} className="flex-1">
+                    <Card className="border border-border p-4 hover:bg-accent transition-colors cursor-pointer">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="truncate text-[18px] font-semibold">
+                            {p.name}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {new Date(p.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        {p.screenshotUrl ? (
+                          <div className="relative h-16 w-28 overflow-hidden rounded-md border border-border flex-shrink-0">
+                            <Image
+                              src={p.screenshotUrl}
+                              alt=""
+                              width={280}
+                              height={160}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : null}
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {new Date(p.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    {p.screenshotUrl ? (
-                      <div className="relative h-16 w-28 overflow-hidden rounded-md border border-border flex-shrink-0">
-                        <Image
-                          src={p.screenshotUrl}
-                          alt=""
-                          width={280}
-                          height={160}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                    </Card>
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
