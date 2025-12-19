@@ -1,29 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export function LogoutCard() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        throw new Error("Logout failed");
-      }
-
+      await signOut({ callbackUrl: "/login" });
       toast.success("Logged out successfully");
-      router.push("/login");
-      router.refresh();
     } catch {
       toast.error("Logout failed");
       setIsLoading(false);

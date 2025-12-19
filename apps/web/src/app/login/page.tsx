@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,21 @@ import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [rememberMe, setRememberMe] = React.useState(true);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError(null);
     setPasswordError(null);
+
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      return;
+    }
 
     if (!password.trim()) {
       setPasswordError("Password is required.");
@@ -26,14 +34,14 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (!res.ok) {
-        setPasswordError("Invalid password. Please try again.");
+      if (result?.error) {
+        setPasswordError("Invalid email or password. Please try again.");
         setIsLoading(false);
         return;
       }
@@ -60,6 +68,32 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError && e.target.value.trim()) {
+                    setEmailError(null);
+                  }
+                }}
+                onBlur={() => {
+                  if (!email.trim()) {
+                    setEmailError("Email is required.");
+                  }
+                }}
+                placeholder="Enter your email"
+                className={emailError ? "border-destructive" : ""}
+                autoFocus
+              />
+              {emailError && (
+                <p className="text-sm text-destructive">{emailError}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -78,24 +112,10 @@ export default function LoginPage() {
                 }}
                 placeholder="Enter password"
                 className={passwordError ? "border-destructive" : ""}
-                autoFocus
               />
               {passwordError && (
                 <p className="text-sm text-destructive">{passwordError}</p>
               )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                id="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                Remember me
-              </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -103,9 +123,10 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-xs text-center text-muted-foreground">
-            Contact your administrator for access credentials
-          </p>
+          <div className="text-xs text-center text-muted-foreground space-y-1">
+            <p>Default credentials:</p>
+            <p className="font-mono">admin@papercuts.dev / papercuts2024</p>
+          </div>
         </div>
       </Card>
     </div>
