@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { ResizableImage } from './ResizableImage';
 import '../globals.css';
 import './Composer.css';
 
@@ -37,11 +37,14 @@ export default function Composer() {
   const [error, setError] = useState<string | null>(null);
   const [screenshotBytes, setScreenshotBytes] = useState<Uint8Array | null>(null);
   const [screenshotInjected, setScreenshotInjected] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image.configure({
+      ResizableImage.configure({
         inline: false,
         allowBase64: true,
       }),
@@ -55,7 +58,27 @@ export default function Composer() {
         class: 'tiptap-editor',
       },
     },
+    editable: true,
   });
+
+  // Add handler for custom image preview event
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleImagePreview = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.src) {
+        setPreviewImage(customEvent.detail.src);
+      }
+    };
+
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener('image-preview', handleImagePreview);
+
+    return () => {
+      editorElement.removeEventListener('image-preview', handleImagePreview);
+    };
+  }, [editor]);
 
   // Load connect code and screenshot bytes on mount
   useEffect(() => {
@@ -188,24 +211,14 @@ export default function Composer() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-8 pb-24">
+      <div className="w-[1000px] mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">New papercut</h1>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="connect-code">Connect code</Label>
-          <Input
-            id="connect-code"
-            value={connectCode}
-            onChange={(e) => onChangeConnect(e.target.value)}
-            placeholder="Paste Connect code from the web app"
-          />
           {parsed ? (
-            <p className="text-sm text-muted-foreground">Connected to: {baseUrl}</p>
+            <p className="text-sm text-muted-foreground mt-1">Connected to: {baseUrl}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">Not connected yet.</p>
+            <p className="text-sm text-muted-foreground mt-1">Not connected yet.</p>
           )}
         </div>
 
@@ -222,18 +235,6 @@ export default function Composer() {
         <div className="space-y-2">
           <Label htmlFor="description">Description with screenshot</Label>
           <EditorContent editor={editor} />
-          {screenshotBytes && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={deleteScreenshot}
-              disabled={isSaving}
-              className="mt-3"
-            >
-              Delete screenshot
-            </Button>
-          )}
         </div>
 
         {error && (
@@ -247,16 +248,34 @@ export default function Composer() {
             Created ✓
           </div>
         )}
+      </div>
 
-        <div className="flex gap-3 justify-end">
+      {/* Sticky bottom panel */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border">
+        <div className="w-[1000px] mx-auto px-8 py-4 flex gap-3 justify-between items-center">
           <Button type="button" variant="outline" onClick={() => window.close()} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="button" onClick={create} disabled={isSaving}>
+          <Button type="button" onClick={create} disabled={isSaving || !parsed}>
             {isSaving ? 'Creating…' : 'Create papercut'}
           </Button>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
