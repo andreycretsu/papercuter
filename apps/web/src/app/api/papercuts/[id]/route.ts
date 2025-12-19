@@ -4,17 +4,19 @@ import { requirePapercutsApiKey } from "@/server/api-key";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const unauthorized = await requirePapercutsApiKey(req);
   if (unauthorized) return unauthorized;
+
+  const { id } = await params;
 
   try {
     const supabase = getSupabaseAdmin();
     const { error } = await supabase
       .from("papercuts")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) throw error;
 
