@@ -6,9 +6,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import type { Papercut } from "@/server/papercuts-supabase-store";
+import { PAPERCUT_MODULES } from "@/server/papercuts-supabase-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
 
 export function HomeClient(props: {
@@ -20,6 +22,11 @@ export function HomeClient(props: {
   const [prefillScreenshotUrl, setPrefillScreenshotUrl] = React.useState<string | null>(null);
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = React.useState(false);
+
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [moduleFilter, setModuleFilter] = React.useState<string>("all");
+  const [emailFilter, setEmailFilter] = React.useState<string>("all");
 
   const refresh = async () => {
     try {
@@ -45,12 +52,46 @@ export function HomeClient(props: {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === items.length) {
+    if (selectedIds.size === filteredItems.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(items.map((p) => p.id)));
+      setSelectedIds(new Set(filteredItems.map((p) => p.id)));
     }
   };
+
+  // Get unique user emails for filter dropdown
+  const uniqueEmails = React.useMemo(() => {
+    const emails = new Set<string>();
+    items.forEach((p) => {
+      if (p.userEmail) emails.add(p.userEmail);
+    });
+    return Array.from(emails).sort();
+  }, [items]);
+
+  // Filter and search logic
+  const filteredItems = React.useMemo(() => {
+    return items.filter((p) => {
+      // Search filter (name and description)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = p.name.toLowerCase().includes(query);
+        const matchesDescription = p.descriptionHtml.toLowerCase().includes(query);
+        if (!matchesName && !matchesDescription) return false;
+      }
+
+      // Module filter
+      if (moduleFilter !== "all" && p.module !== moduleFilter) {
+        return false;
+      }
+
+      // Email filter
+      if (emailFilter !== "all" && p.userEmail !== emailFilter) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [items, searchQuery, moduleFilter, emailFilter]);
 
   const bulkDelete = async () => {
     if (selectedIds.size === 0 || isDeleting) return;
@@ -151,25 +192,80 @@ export function HomeClient(props: {
           <Card className="border border-border p-6">
             <div className="text-[18px] font-medium">No papercuts yet</div>
             <div className="mt-1 text-sm text-muted-foreground">
-              Click “New papercut” to create one. You can also create from the
+              Click "New papercut" to create one. You can also create from the
               extension later.
             </div>
           </Card>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={selectedIds.size === items.length && items.length > 0}
-                onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span className="text-sm text-muted-foreground">
-                Select all
-              </span>
+            {/* Search and filters */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <Input
+                  type="search"
+                  placeholder="Search papercuts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={moduleFilter}
+                  onChange={(e) => setModuleFilter(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="all">All modules</option>
+                  {PAPERCUT_MODULES.map((mod) => (
+                    <option key={mod} value={mod}>
+                      {mod}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={emailFilter}
+                  onChange={(e) => setEmailFilter(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="all">All users</option>
+                  {uniqueEmails.map((email) => (
+                    <option key={email} value={email}>
+                      {email}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="grid gap-4">
-              {items.map((p) => (
+
+            {/* Results count */}
+            {(searchQuery || moduleFilter !== "all" || emailFilter !== "all") && (
+              <div className="text-sm text-muted-foreground">
+                Showing {filteredItems.length} of {items.length} papercuts
+              </div>
+            )}
+
+            {filteredItems.length === 0 ? (
+              <Card className="border border-border p-6">
+                <div className="text-[18px] font-medium">No matching papercuts</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Try adjusting your search or filters
+                </div>
+              </Card>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === filteredItems.length && filteredItems.length > 0}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Select all
+                  </span>
+                </div>
+                <div className="grid gap-4">
+                  {filteredItems.map((p) => (
                 <div key={p.id} className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -219,8 +315,10 @@ export function HomeClient(props: {
                     </Card>
                   </Link>
                 </div>
-              ))}
-            </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
