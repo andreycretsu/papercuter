@@ -151,52 +151,69 @@ export function HomeClient(props: {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-10">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border">
+        <div className="mx-auto w-full max-w-4xl px-6 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-2xl font-semibold leading-tight">Papercuts</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Capture a screenshot, add a short description, and turn it into
+                action later.
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedIds.size} selected
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={bulkDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Deleting..." : "Delete selected"}
+                  </Button>
+                </>
+              )}
+              <Link href="/settings">
+                <Button variant="outline" size="icon" className="h-10 w-10">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </Button>
+              </Link>
+              <Button onClick={() => setOpen(true)} className="h-10">
+                New papercut
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="mx-auto w-full max-w-4xl px-6 py-6">
         {props.initialError ? (
-          <Card className="border border-border p-4">
+          <Card className="border border-border p-4 mb-6">
             <div className="text-[18px] font-semibold">Setup needed</div>
             <div className="mt-1 text-sm text-muted-foreground">
               {props.initialError}
             </div>
           </Card>
         ) : null}
-
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-2xl font-semibold leading-tight">Papercuts</div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              Capture a screenshot, add a short description, and turn it into
-              action later.
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {selectedIds.size > 0 && (
-              <>
-                <span className="text-sm text-muted-foreground">
-                  {selectedIds.size} selected
-                </span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={bulkDelete}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? "Deleting..." : "Delete selected"}
-                </Button>
-              </>
-            )}
-            <Link href="/settings">
-              <Button variant="outline" className="h-10">
-                Settings
-              </Button>
-            </Link>
-            <Button onClick={() => setOpen(true)} className="h-10">
-              New papercut
-            </Button>
-          </div>
-        </div>
-
-        <Separator />
 
         {items.length === 0 ? (
           <Card className="border border-border p-6">
@@ -207,9 +224,10 @@ export function HomeClient(props: {
             </div>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {/* Search and filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <>
+            {/* Sticky search and filters */}
+            <div className="sticky top-[89px] z-10 bg-background pb-4 mb-4 border-b border-border">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
               <div className="flex-1">
                 <Input
                   type="search"
@@ -255,14 +273,15 @@ export function HomeClient(props: {
                   </Button>
                 )}
               </div>
-            </div>
-
-            {/* Results count */}
-            {hasActiveFilters && (
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredItems.length} of {items.length} papercuts
               </div>
-            )}
+
+              {/* Results count */}
+              {hasActiveFilters && (
+                <div className="text-sm text-muted-foreground pt-2">
+                  Showing {filteredItems.length} of {items.length} papercuts
+                </div>
+              )}
+            </div>
 
             {filteredItems.length === 0 ? (
               <Card className="border border-border p-6">
@@ -272,7 +291,7 @@ export function HomeClient(props: {
                 </div>
               </Card>
             ) : (
-              <>
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -337,9 +356,9 @@ export function HomeClient(props: {
                 </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
 
