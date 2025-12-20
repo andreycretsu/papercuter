@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   const screenshotUrl =
     typeof body.screenshotUrl === "string" ? body.screenshotUrl : null;
   const module =
-    typeof body.module === "string" ? body.module : null;
+    typeof body.module === "string" && body.module.trim() ? body.module : null;
 
   // Get the user's session to track who created the papercut
   const session = await getServerSession(authOptions);
