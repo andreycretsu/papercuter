@@ -37,22 +37,34 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
+      console.log("[Login] Attempting sign in...");
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
+      console.log("[Login] Sign in result:", result);
+
       if (result?.error) {
+        console.error("[Login] Sign in error:", result.error);
         setPasswordError("Invalid email or password. Please try again.");
         setIsLoading(false);
         return;
       }
 
-      toast.success("Logged in successfully");
-      // Force a hard redirect to ensure session is loaded
-      window.location.href = "/";
-    } catch {
+      if (result?.ok) {
+        console.log("[Login] Sign in successful, redirecting...");
+        toast.success("Logged in successfully");
+        // Force a hard redirect to ensure session is loaded
+        window.location.href = "/";
+      } else {
+        console.error("[Login] Sign in failed without error");
+        setPasswordError("Login failed. Please try again.");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("[Login] Exception during sign in:", error);
       toast.error("Login failed");
       setIsLoading(false);
     }
