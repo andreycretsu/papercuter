@@ -28,6 +28,16 @@ export function HomeClient(props: {
   const [moduleFilter, setModuleFilter] = React.useState<string>("all");
   const [emailFilter, setEmailFilter] = React.useState<string>("all");
 
+  // Check if any filters are active
+  const hasActiveFilters = searchQuery || moduleFilter !== "all" || emailFilter !== "all";
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchQuery("");
+    setModuleFilter("all");
+    setEmailFilter("all");
+  };
+
   const refresh = async () => {
     try {
       const res = await fetch("/api/papercuts");
@@ -234,11 +244,21 @@ export function HomeClient(props: {
                     </option>
                   ))}
                 </select>
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetFilters}
+                    className="h-9"
+                  >
+                    Clear filters
+                  </Button>
+                )}
               </div>
             </div>
 
             {/* Results count */}
-            {(searchQuery || moduleFilter !== "all" || emailFilter !== "all") && (
+            {hasActiveFilters && (
               <div className="text-sm text-muted-foreground">
                 Showing {filteredItems.length} of {items.length} papercuts
               </div>
