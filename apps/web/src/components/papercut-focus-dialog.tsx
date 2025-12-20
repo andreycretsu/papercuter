@@ -95,96 +95,102 @@ export function PapercutFocusDialog(props: {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent
-        className="h-[100svh] w-[100svw] max-w-none translate-x-[-50%] translate-y-[-50%] rounded-none border-0 p-0"
+        className="h-[100svh] w-[100svw] max-w-none translate-x-[-50%] translate-y-[-50%] rounded-none border-0 p-0 bg-background"
         showCloseButton={false}
       >
-        <DialogHeader className="px-6 pt-6">
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-xl">New papercut</DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => props.onOpenChange(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button type="button" onClick={create} disabled={isSaving}>
-                {isSaving ? "Creating…" : "Create"}
-              </Button>
+        <div className="h-full w-full p-8">
+          <div className="h-full w-full rounded-[20px] border border-gray-200 bg-white shadow-lg flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-8 pt-6 pb-4 flex-shrink-0">
+              <DialogTitle className="text-2xl font-semibold">New papercut</DialogTitle>
             </div>
-          </div>
-        </DialogHeader>
 
-        <Separator />
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-auto px-8 pb-24 space-y-6">
+              {screenshotUrl ? (
+                <div className="w-full">
+                  <div className="mb-2 text-sm font-medium text-muted-foreground">
+                    Screenshot
+                  </div>
+                  <div className="relative w-full overflow-hidden rounded-lg border border-border">
+                    <Image
+                      src={screenshotUrl}
+                      alt="Screenshot"
+                      width={1600}
+                      height={900}
+                      className="h-auto w-full"
+                    />
+                  </div>
+                </div>
+              ) : null}
 
-        <div className="flex h-[calc(100svh-73px)] w-full flex-col gap-6 overflow-auto px-6 py-6">
-          {screenshotUrl ? (
-            <div className="w-full">
-              <div className="mb-2 text-sm font-medium text-muted-foreground">
-                Screenshot
+              <div className="grid gap-2">
+                <Label htmlFor="papercut-name">Name</Label>
+                <Input
+                  id="papercut-name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError && e.target.value.trim()) {
+                      setNameError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!name.trim()) {
+                      setNameError("Name is required.");
+                    }
+                  }}
+                  placeholder="Short title"
+                  className={`h-11 text-[18px] ${nameError ? 'border-destructive' : ''}`}
+                  autoFocus
+                />
+                {nameError && (
+                  <p className="text-sm text-destructive">{nameError}</p>
+                )}
               </div>
-              <div className="relative w-full overflow-hidden rounded-lg border border-border">
-                <Image
-                  src={screenshotUrl}
-                  alt="Screenshot"
-                  width={1600}
-                  height={900}
-                  className="h-auto w-full"
+
+              <div className="grid gap-2">
+                <Label htmlFor="papercut-module">Module</Label>
+                <select
+                  id="papercut-module"
+                  value={module}
+                  onChange={(e) => setModule(e.target.value as PapercutModule | "")}
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select a module (optional)</option>
+                  {PAPERCUT_MODULES.map((mod) => (
+                    <option key={mod} value={mod}>
+                      {mod}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Description</Label>
+                <DescriptionEditor
+                  valueHtml={descriptionHtml}
+                  onChangeHtml={setDescriptionHtml}
                 />
               </div>
             </div>
-          ) : null}
 
-          <div className="grid gap-2">
-            <Label htmlFor="papercut-name">Name</Label>
-            <Input
-              id="papercut-name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (nameError && e.target.value.trim()) {
-                  setNameError(null);
-                }
-              }}
-              onBlur={() => {
-                if (!name.trim()) {
-                  setNameError("Name is required.");
-                }
-              }}
-              placeholder="Short title"
-              className={`h-11 text-[18px] ${nameError ? 'border-destructive' : ''}`}
-              autoFocus
-            />
-            {nameError && (
-              <p className="text-sm text-destructive">{nameError}</p>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="papercut-module">Module</Label>
-            <select
-              id="papercut-module"
-              value={module}
-              onChange={(e) => setModule(e.target.value as PapercutModule | "")}
-              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="">Select a module (optional)</option>
-              {PAPERCUT_MODULES.map((mod) => (
-                <option key={mod} value={mod}>
-                  {mod}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Description</Label>
-            <DescriptionEditor
-              valueHtml={descriptionHtml}
-              onChangeHtml={setDescriptionHtml}
-            />
+            {/* Sticky bottom panel */}
+            <div className="flex-shrink-0 border-t border-border bg-background">
+              <div className="px-8 py-4 flex gap-3 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => props.onOpenChange(false)}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" onClick={create} disabled={isSaving}>
+                  {isSaving ? "Creating…" : "Create papercut"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

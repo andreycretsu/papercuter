@@ -182,15 +182,10 @@ export function DescriptionEditor(props: {
           <FloatingMenu
             editor={editor}
             options={{ placement: "left" }}
-            shouldShow={({ editor, state }) => {
-              // Show on empty paragraph at cursor (block-menu vibe)
-              const { $from } = state.selection;
-              const node = $from.parent;
-              return (
-                editor.isEditable &&
-                node.type.name === "paragraph" &&
-                node.content.size === 0
-              );
+            shouldShow={({ state }) => {
+              // Only show when text is selected
+              const { from, to } = state.selection;
+              return from !== to;
             }}
             className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 shadow-lg backdrop-blur"
           >
