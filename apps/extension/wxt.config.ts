@@ -13,8 +13,8 @@ export default defineConfig({
     commands: {
       capture_papercut: {
         suggested_key: {
-          default: 'Ctrl+Shift+S',
-          mac: 'Command+Shift+S',
+          default: 'Ctrl+S',
+          mac: 'Command+S',
         },
         description: 'Capture a papercut',
       },
