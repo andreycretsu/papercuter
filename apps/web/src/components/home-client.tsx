@@ -196,7 +196,7 @@ export function HomeClient(props: {
                   </Button>
                 </>
               )}
-              <Link href="/dashboard">
+              <Link href="/">
                 <Button variant="outline" className="h-10">
                   Dashboard
                 </Button>

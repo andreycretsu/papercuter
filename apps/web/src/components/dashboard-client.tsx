@@ -73,9 +73,9 @@ export function DashboardClient(props: {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/">
+              <Link href="/papercuts-list">
                 <Button variant="outline" className="h-10">
-                  All papercuts
+                  Papercuts
                 </Button>
               </Link>
               <Link href="/settings">
