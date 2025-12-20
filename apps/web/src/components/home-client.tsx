@@ -178,6 +178,11 @@ export function HomeClient(props: {
                   </Button>
                 </>
               )}
+              <Link href="/dashboard">
+                <Button variant="outline" className="h-10">
+                  Dashboard
+                </Button>
+              </Link>
               <Link href="/settings">
                 <Button variant="outline" size="icon" className="h-10 w-10">
                   <svg
