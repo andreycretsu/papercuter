@@ -12,7 +12,8 @@ export async function GET() {
   try {
     const items = await listPapercutsSupabase();
     return NextResponse.json({ items });
-  } catch {
+  } catch (error) {
+    console.error("[GET /api/papercuts] Error loading papercuts:", error);
     return NextResponse.json(
       { error: "Failed to load papercuts" },
       { status: 500 }
@@ -55,7 +56,8 @@ export async function POST(req: Request) {
       module: module as any,
     });
     return NextResponse.json({ item: created }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("[POST /api/papercuts] Error creating papercut:", error);
     return NextResponse.json(
       { error: "Failed to create papercut" },
       { status: 500 }
