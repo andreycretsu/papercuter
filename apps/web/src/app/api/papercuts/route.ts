@@ -4,6 +4,8 @@ import {
   listPapercutsSupabase,
 } from "@/server/papercuts-supabase-store";
 import { requirePapercutsApiKey } from "@/server/api-key";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export async function GET() {
   // Reads are allowed without API key (so the web UI works normally).
@@ -37,11 +39,16 @@ export async function POST(req: Request) {
   const screenshotUrl =
     typeof body.screenshotUrl === "string" ? body.screenshotUrl : null;
 
+  // Get the user's session to track who created the papercut
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email || null;
+
   try {
     const created = await createPapercutSupabase({
       name: body.name,
       descriptionHtml,
       screenshotUrl,
+      userEmail,
     });
     return NextResponse.json({ item: created }, { status: 201 });
   } catch {

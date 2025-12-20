@@ -187,8 +187,14 @@ export function HomeClient(props: {
                           <div className="truncate text-[18px] font-semibold">
                             {p.name}
                           </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {new Date(p.createdAt).toLocaleString()}
+                          <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                            <div>{new Date(p.createdAt).toLocaleString()}</div>
+                            {p.userEmail && (
+                              <div className="flex items-center gap-1">
+                                <span>Created by:</span>
+                                <span className="font-medium">{p.userEmail}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {p.screenshotUrl ? (
