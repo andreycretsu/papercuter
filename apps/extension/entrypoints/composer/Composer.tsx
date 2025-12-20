@@ -9,6 +9,9 @@ import { ResizableImage } from './ResizableImage';
 import '../globals.css';
 import './Composer.css';
 
+type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+
 function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
   const trimmed = (code ?? '').trim();
   if (!trimmed) return null;
@@ -33,6 +36,7 @@ export default function Composer() {
 
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
+  const [module, setModule] = useState<PapercutModule | ''>('');
   const [isSaving, setIsSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,6 +184,7 @@ export default function Composer() {
           name: name.trim(),
           descriptionHtml,
           screenshotUrl: uploadedUrl,
+          module: module || null,
         }),
       });
 
@@ -260,6 +265,23 @@ export default function Composer() {
           {nameError && (
             <p className="text-sm text-destructive">{nameError}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="module">Module</Label>
+          <select
+            id="module"
+            value={module}
+            onChange={(e) => setModule(e.target.value as PapercutModule | '')}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Select a module (optional)</option>
+            {PAPERCUT_MODULES.map((mod) => (
+              <option key={mod} value={mod}>
+                {mod}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">

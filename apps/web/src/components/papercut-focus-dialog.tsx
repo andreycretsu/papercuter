@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { DescriptionEditor } from "@/components/description-editor";
+import { PAPERCUT_MODULES, type PapercutModule } from "@/server/papercuts-supabase-store";
 
 export function PapercutFocusDialog(props: {
   open: boolean;
@@ -36,6 +37,7 @@ export function PapercutFocusDialog(props: {
   const [screenshotUrl, setScreenshotUrl] = React.useState<string | null>(
     props.initialScreenshotUrl ?? null
   );
+  const [module, setModule] = React.useState<PapercutModule | "">("");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -71,6 +73,7 @@ export function PapercutFocusDialog(props: {
           name,
           descriptionHtml,
           screenshotUrl,
+          module: module || null,
         }),
       });
       const data = (await res.json()) as { item?: any; error?: string };
@@ -81,6 +84,7 @@ export function PapercutFocusDialog(props: {
       setName("");
       setDescriptionHtml("");
       setScreenshotUrl(null);
+      setModule("");
     } catch {
       toast.error("Couldn’t create papercut");
     } finally {
@@ -156,6 +160,23 @@ export function PapercutFocusDialog(props: {
             {nameError && (
               <p className="text-sm text-destructive">{nameError}</p>
             )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="papercut-module">Module</Label>
+            <select
+              id="papercut-module"
+              value={module}
+              onChange={(e) => setModule(e.target.value as PapercutModule | "")}
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select a module (optional)</option>
+              {PAPERCUT_MODULES.map((mod) => (
+                <option key={mod} value={mod}>
+                  {mod}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid gap-2">

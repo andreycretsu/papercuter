@@ -7,12 +7,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+
 type Papercut = {
   id: string;
   name: string;
   descriptionHtml: string;
   screenshotUrl?: string | null;
   createdAt: string;
+  userEmail?: string | null;
+  module?: PapercutModule | null;
 };
 
 export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
@@ -47,12 +51,25 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground">
-              {papercut.name}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Created {new Date(papercut.createdAt).toLocaleString()}
-            </p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-foreground">
+                {papercut.name}
+              </h1>
+              {papercut.module && (
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  {papercut.module}
+                </span>
+              )}
+            </div>
+            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+              <div>Created {new Date(papercut.createdAt).toLocaleString()}</div>
+              {papercut.userEmail && (
+                <div className="flex items-center gap-1">
+                  <span>Created by:</span>
+                  <span className="font-medium">{papercut.userEmail}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {showConfirm ? (

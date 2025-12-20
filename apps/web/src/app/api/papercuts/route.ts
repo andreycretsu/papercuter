@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     name?: unknown;
     descriptionHtml?: unknown;
     screenshotUrl?: unknown;
+    module?: unknown;
   };
 
   if (!body || typeof body.name !== "string") {
@@ -38,6 +39,8 @@ export async function POST(req: Request) {
     typeof body.descriptionHtml === "string" ? body.descriptionHtml : "";
   const screenshotUrl =
     typeof body.screenshotUrl === "string" ? body.screenshotUrl : null;
+  const module =
+    typeof body.module === "string" ? body.module : null;
 
   // Get the user's session to track who created the papercut
   const session = await getServerSession(authOptions);
@@ -49,6 +52,7 @@ export async function POST(req: Request) {
       descriptionHtml,
       screenshotUrl,
       userEmail,
+      module: module as any,
     });
     return NextResponse.json({ item: created }, { status: 201 });
   } catch {

@@ -184,8 +184,15 @@ export function HomeClient(props: {
                     <Card className="border border-border p-4 hover:bg-accent transition-colors cursor-pointer">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <div className="truncate text-[18px] font-semibold">
-                            {p.name}
+                          <div className="flex items-center gap-2">
+                            <div className="truncate text-[18px] font-semibold">
+                              {p.name}
+                            </div>
+                            {p.module && (
+                              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 flex-shrink-0">
+                                {p.module}
+                              </span>
+                            )}
                           </div>
                           <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                             <div>{new Date(p.createdAt).toLocaleString()}</div>

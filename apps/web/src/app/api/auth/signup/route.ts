@@ -13,6 +13,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Restrict signup to @peopleforce.io emails only
+    if (!email.endsWith("@peopleforce.io")) {
+      return NextResponse.json(
+        { error: "Only @peopleforce.io email addresses are allowed" },
+        { status: 403 }
+      );
+    }
+
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
