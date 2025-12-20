@@ -77,32 +77,47 @@ function App() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Only activate shortcuts on the main "choose" screen
-      if (step !== 'choose') return;
-
       // Ignore if typing in an input field
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      // S key - Create from screenshot
-      if (e.key === 's' || e.key === 'S') {
-        e.preventDefault();
-        resetDraft();
-        setStep('screenshot-method');
+      // Main menu shortcuts
+      if (step === 'choose') {
+        // S key - Create from screenshot
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          resetDraft();
+          setStep('screenshot-method');
+        }
+
+        // N key - Create from scratch (New)
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          resetDraft();
+          setStep('scratch');
+        }
       }
 
-      // N key - Create from scratch (New)
-      if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        resetDraft();
-        setStep('scratch');
+      // Screenshot method screen shortcuts
+      if (step === 'screenshot-method') {
+        // S key - Select custom area
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          startSelectArea();
+        }
+
+        // F key - Capture full visible screen
+        if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          startCaptureVisible();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [step, resetDraft]);
+  }, [step, resetDraft, startSelectArea, startCaptureVisible]);
 
   const saveSettings = async () => {
     await browser.storage.local.set({
@@ -326,7 +341,7 @@ function App() {
                   onClick={startSelectArea}
                   disabled={isSaving}
                 >
-                  <div className="tileTitle">Select area</div>
+                  <div className="tileTitle">Select area <span style={{ opacity: 0.5, fontSize: '0.875rem' }}>(S)</span></div>
                   <div className="tileDesc">Drag a rectangle on the current page.</div>
                 </button>
                 <button
@@ -335,7 +350,7 @@ function App() {
                   onClick={startCaptureVisible}
                   disabled={isSaving}
                 >
-                  <div className="tileTitle">Capture visible screen</div>
+                  <div className="tileTitle">Capture visible screen <span style={{ opacity: 0.5, fontSize: '0.875rem' }}>(F)</span></div>
                   <div className="tileDesc">Captures the current visible viewport.</div>
                 </button>
               </div>
