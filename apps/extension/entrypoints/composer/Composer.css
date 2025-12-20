@@ -8,14 +8,14 @@
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.9375rem;
   line-height: 1.6;
-  background: hsl(var(--background));
+  background: transparent;
   color: hsl(var(--foreground));
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .ProseMirror:focus {
-  border-color: hsl(var(--ring));
+  outline: none;
   box-shadow: 0 0 0 1px hsl(var(--ring));
 }
 
