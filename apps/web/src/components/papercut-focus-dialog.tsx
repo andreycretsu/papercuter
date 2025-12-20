@@ -95,7 +95,7 @@ export function PapercutFocusDialog(props: {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent
-        className="h-[100svh] w-[100svw] max-w-none translate-x-[-50%] translate-y-[-50%] rounded-none border-0 p-0 bg-background"
+        className="h-[100svh] w-[100svw] !max-w-none translate-x-[-50%] translate-y-[-50%] rounded-none border-0 p-0 bg-background"
         showCloseButton={false}
       >
         <div className="h-full w-full p-8">
