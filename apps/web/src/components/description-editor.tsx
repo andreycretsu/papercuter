@@ -63,7 +63,7 @@ export function DescriptionEditor(props: {
     editorProps: {
       attributes: {
         class:
-          "tiptap min-h-[280px] w-full rounded-lg border border-border bg-background px-4 py-3 text-[18px] leading-7 outline-none",
+          "tiptap min-h-[280px] w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs leading-7 outline-none md:text-sm",
       },
       handlePaste: (view, event) => {
         const e = event as ClipboardEvent;
