@@ -50,6 +50,15 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
 
+  const resetDraft = () => {
+    setName('New papercut');
+    setDescriptionText('');
+    setImageBytes(null);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(null);
+    setError(null);
+  };
+
   useEffect(() => {
     browser.storage.local.get(['papercuts_connect']).then((res) => {
       const c = res['papercuts_connect'];
@@ -93,16 +102,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [step]);
-
-  const resetDraft = () => {
-    setName('New papercut');
-    setDescriptionText('');
-    setImageBytes(null);
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-    setImagePreviewUrl(null);
-    setError(null);
-  };
+  }, [step, resetDraft]);
 
   const saveSettings = async () => {
     await browser.storage.local.set({
@@ -264,8 +264,8 @@ function App() {
               }}
             >
               <div className="tileTitle">
-                Create from screenshot
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded border border-border">S</kbd>
+                <span>Create from screenshot</span>
+                <kbd>S</kbd>
               </div>
               <div className="tileDesc">Select an area or capture the visible screen.</div>
             </button>
@@ -278,8 +278,8 @@ function App() {
               }}
             >
               <div className="tileTitle">
-                Create from scratch
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded border border-border">N</kbd>
+                <span>Create from scratch</span>
+                <kbd>N</kbd>
               </div>
               <div className="tileDesc">Create a papercut without a screenshot.</div>
             </button>

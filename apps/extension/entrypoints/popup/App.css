@@ -87,12 +87,32 @@
   font-size: 14px;
   font-weight: 800;
   color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .tileDesc {
   margin-top: 2px;
   font-size: 12px;
   color: rgba(15, 23, 42, 0.6);
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .preview {
