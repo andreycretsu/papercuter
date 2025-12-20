@@ -117,7 +117,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [step, resetDraft, startSelectArea, startCaptureVisible]);
+  }, [step, resetDraft]);
 
   const saveSettings = async () => {
     await browser.storage.local.set({
