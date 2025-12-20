@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Minor (0.X.0)**: New features, significant improvements
 - **Patch (0.0.X)**: Bug fixes, small improvements
 
+
+
+## [1.0.2] - 2025-12-20
+
+### Changed
+- Auto-deployment build
+
+
+## [1.0.1] - 2025-12-20
+
+### Changed
+- Auto-deployment build
+
+
 ## [1.0.0] - 2025-12-20
 
 ### Added

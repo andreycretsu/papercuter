@@ -8,7 +8,7 @@
     "dev:web": "npm run dev -w @papercuts/web",
     "dev:ext": "npm run dev -w @papercuts/extension",
     "build:ext": "npm run build -w @papercuts/extension",
-    "build": "npm run build -ws",
+    "build": "npm run build:ext && npm run build -w @papercuts/web",
     "lint": "npm run lint -ws"
   },
   "workspaces": [
