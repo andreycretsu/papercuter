@@ -65,6 +65,36 @@ function App() {
       .catch(() => setActiveTabUrl(null));
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only activate shortcuts on the main "choose" screen
+      if (step !== 'choose') return;
+
+      // Ignore if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // S key - Create from screenshot
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        resetDraft();
+        setStep('screenshot-method');
+      }
+
+      // N key - Create from scratch (New)
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        resetDraft();
+        setStep('scratch');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [step]);
+
   const resetDraft = () => {
     setName('New papercut');
     setDescriptionText('');
@@ -233,7 +263,10 @@ function App() {
                 setStep('screenshot-method');
               }}
             >
-              <div className="tileTitle">Create from screenshot</div>
+              <div className="tileTitle">
+                Create from screenshot
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded border border-border">S</kbd>
+              </div>
               <div className="tileDesc">Select an area or capture the visible screen.</div>
             </button>
             <button
@@ -244,7 +277,10 @@ function App() {
                 setStep('scratch');
               }}
             >
-              <div className="tileTitle">Create from scratch</div>
+              <div className="tileTitle">
+                Create from scratch
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded border border-border">N</kbd>
+              </div>
               <div className="tileDesc">Create a papercut without a screenshot.</div>
             </button>
           </div>
