@@ -12,7 +12,12 @@ try {
   const gitDate = execSync('git log -1 --format=%cd --date=short').toString().trim();
   const gitBranch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
 
+  // Read semantic version from VERSION file
+  const versionPath = path.join(__dirname, '..', 'VERSION');
+  const version = fs.readFileSync(versionPath, 'utf8').trim();
+
   const versionInfo = {
+    version,
     hash: gitHash,
     date: gitDate,
     branch: gitBranch,
@@ -30,7 +35,13 @@ try {
 } catch (error) {
   console.error('Failed to generate version info:', error.message);
   // Create a fallback version
+  const versionPath = path.join(__dirname, '..', 'VERSION');
+  const version = fs.existsSync(versionPath)
+    ? fs.readFileSync(versionPath, 'utf8').trim()
+    : '0.0.0';
+
   const fallback = {
+    version,
     hash: 'unknown',
     date: new Date().toISOString().split('T')[0],
     branch: 'unknown',

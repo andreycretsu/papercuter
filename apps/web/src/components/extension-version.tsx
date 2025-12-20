@@ -3,6 +3,7 @@
 import * as React from "react";
 
 type VersionInfo = {
+  version: string;
   hash: string;
   date: string;
   branch: string;
@@ -23,7 +24,9 @@ export function ExtensionVersion() {
 
   return (
     <p className="text-xs text-muted-foreground mt-3">
-      Extension version: <code className="font-mono">{version.hash}</code> ({version.date})
+      Extension version: <code className="font-mono font-semibold">v{version.version}</code>
+      {" "}
+      <span className="opacity-70">({version.hash} - {version.date})</span>
     </p>
   );
 }
