@@ -171,7 +171,7 @@ export function HomeClient(props: {
     <div className="min-h-screen bg-background">
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="mx-auto w-full max-w-4xl px-6 py-4">
+        <div className="mx-auto w-full max-w-6xl px-6 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-2xl font-semibold leading-tight">Papercuts</div>
@@ -228,7 +228,7 @@ export function HomeClient(props: {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto w-full max-w-4xl px-6 py-6">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
         {props.initialError ? (
           <Card className="border border-border p-4 mb-6">
             <div className="text-[18px] font-semibold">Setup needed</div>
