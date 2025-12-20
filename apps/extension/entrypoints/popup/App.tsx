@@ -341,7 +341,10 @@ function App() {
                   onClick={startSelectArea}
                   disabled={isSaving}
                 >
-                  <div className="tileTitle">Select area <span style={{ opacity: 0.5, fontSize: '0.875rem' }}>(S)</span></div>
+                  <div className="tileTitle">
+                    Select area
+                    <kbd>S</kbd>
+                  </div>
                   <div className="tileDesc">Drag a rectangle on the current page.</div>
                 </button>
                 <button
@@ -350,7 +353,10 @@ function App() {
                   onClick={startCaptureVisible}
                   disabled={isSaving}
                 >
-                  <div className="tileTitle">Capture visible screen <span style={{ opacity: 0.5, fontSize: '0.875rem' }}>(F)</span></div>
+                  <div className="tileTitle">
+                    Capture visible screen
+                    <kbd>F</kbd>
+                  </div>
                   <div className="tileDesc">Captures the current visible viewport.</div>
                 </button>
               </div>
