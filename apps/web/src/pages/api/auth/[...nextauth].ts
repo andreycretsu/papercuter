@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
           // Get user from database
           const { data: user, error } = await supabase
             .from("users")
-            .select("id, email, password_hash")
+            .select("id, email, password_hash, role")
             .eq("email", credentials.email)
             .single();
 
@@ -54,6 +54,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.email.split('@')[0],
+            role: user.role || 'editor',
           };
         } catch (error) {
           console.error("[Auth] Unexpected error:", error);
@@ -75,13 +76,15 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.role = (user as any).role || 'editor';
       }
-      console.log("[Auth] JWT callback - token:", { id: token.id, email: token.email });
+      console.log("[Auth] JWT callback - token:", { id: token.id, email: token.email, role: token.role });
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.email = token.email as string;
+        (session.user as any).role = token.role || 'editor';
       }
       console.log("[Auth] Session callback - session:", session);
       return session;

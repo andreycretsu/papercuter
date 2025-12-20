@@ -12,16 +12,28 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function HomeClient(props: {
   initialPapercuts: Papercut[];
   initialError?: string | null;
+  userRole: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<Papercut[]>(props.initialPapercuts);
   const [prefillScreenshotUrl, setPrefillScreenshotUrl] = React.useState<string | null>(null);
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -103,9 +115,15 @@ export function HomeClient(props: {
     });
   }, [items, searchQuery, moduleFilter, emailFilter]);
 
+  const handleDeleteClick = () => {
+    if (selectedIds.size === 0) return;
+    setShowDeleteConfirm(true);
+  };
+
   const bulkDelete = async () => {
     if (selectedIds.size === 0 || isDeleting) return;
 
+    setShowDeleteConfirm(false);
     setIsDeleting(true);
     try {
       const res = await fetch("/api/papercuts/bulk-delete", {
@@ -163,7 +181,7 @@ export function HomeClient(props: {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {selectedIds.size > 0 && (
+              {selectedIds.size > 0 && props.userRole === 'admin' && (
                 <>
                   <span className="text-sm text-muted-foreground">
                     {selectedIds.size} selected
@@ -171,7 +189,7 @@ export function HomeClient(props: {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={bulkDelete}
+                    onClick={handleDeleteClick}
                     disabled={isDeleting}
                   >
                     {isDeleting ? "Deleting..." : "Delete selected"}
@@ -373,6 +391,26 @@ export function HomeClient(props: {
         initialScreenshotUrl={prefillScreenshotUrl}
         onCreated={() => refresh()}
       />
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} papercut{selectedIds.size > 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected papercuts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
