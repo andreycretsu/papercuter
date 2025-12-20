@@ -38,6 +38,7 @@ export function PapercutFocusDialog(props: {
     props.initialScreenshotUrl ?? null
   );
   const [module, setModule] = React.useState<PapercutModule | "">("");
+  const [moduleError, setModuleError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -58,9 +59,15 @@ export function PapercutFocusDialog(props: {
   const create = async () => {
     if (isSaving) return;
     setNameError(null);
+    setModuleError(null);
 
     if (!name.trim()) {
       setNameError("Name is required.");
+      return;
+    }
+
+    if (!module) {
+      setModuleError("Module is required.");
       return;
     }
 
@@ -150,20 +157,33 @@ export function PapercutFocusDialog(props: {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="papercut-module">Module</Label>
+                <Label htmlFor="papercut-module">Module *</Label>
                 <select
                   id="papercut-module"
                   value={module}
-                  onChange={(e) => setModule(e.target.value as PapercutModule | "")}
-                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  onChange={(e) => {
+                    setModule(e.target.value as PapercutModule | "");
+                    if (moduleError && e.target.value) {
+                      setModuleError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!module) {
+                      setModuleError("Module is required.");
+                    }
+                  }}
+                  className={`flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${moduleError ? 'border-destructive' : ''}`}
                 >
-                  <option value="">Select a module (optional)</option>
+                  <option value="">Select a module</option>
                   {PAPERCUT_MODULES.map((mod) => (
                     <option key={mod} value={mod}>
                       {mod}
                     </option>
                   ))}
                 </select>
+                {moduleError && (
+                  <p className="text-sm text-destructive">{moduleError}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
