@@ -48,6 +48,14 @@ export async function POST(req: Request) {
   const userEmail = session?.user?.email || null;
 
   try {
+    console.log("[POST /api/papercuts] Creating papercut with:", {
+      name: body.name,
+      hasDescription: !!descriptionHtml,
+      hasScreenshot: !!screenshotUrl,
+      userEmail,
+      module,
+    });
+
     const created = await createPapercutSupabase({
       name: body.name,
       descriptionHtml,
@@ -55,11 +63,22 @@ export async function POST(req: Request) {
       userEmail,
       module: module as any,
     });
+
+    console.log("[POST /api/papercuts] Successfully created papercut:", created.id);
     return NextResponse.json({ item: created }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/papercuts] Error creating papercut:", error);
+    console.error("[POST /api/papercuts] Error details:", {
+      message: (error as any)?.message,
+      code: (error as any)?.code,
+      details: (error as any)?.details,
+      hint: (error as any)?.hint,
+    });
     return NextResponse.json(
-      { error: "Failed to create papercut" },
+      {
+        error: "Failed to create papercut",
+        details: process.env.NODE_ENV === 'development' ? (error as any)?.message : undefined
+      },
       { status: 500 }
     );
   }

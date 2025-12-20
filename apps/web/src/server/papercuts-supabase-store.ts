@@ -82,13 +82,18 @@ export async function createPapercutSupabase(input: {
     module: input.module ?? null,
   };
 
+  console.log("[createPapercutSupabase] Inserting into database:", insert);
+
   const { data, error } = await supabase
     .from("papercuts")
     .insert(insert)
     .select("id,name,description_html,screenshot_url,created_at,user_email,module")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("[createPapercutSupabase] Database error:", error);
+    throw error;
+  }
   const r = data as DbRow;
   return {
     id: r.id,
