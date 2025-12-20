@@ -9,11 +9,13 @@ export const dynamic = "force-dynamic";
 export default async function PapercutPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   let papercut;
   try {
-    papercut = await getPapercutById(params.id);
+    papercut = await getPapercutById(id);
   } catch {
     notFound();
   }
