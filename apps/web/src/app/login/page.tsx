@@ -50,8 +50,8 @@ export default function LoginPage() {
       }
 
       toast.success("Logged in successfully");
-      router.push("/");
-      router.refresh();
+      // Force a hard redirect to ensure session is loaded
+      window.location.href = "/";
     } catch {
       toast.error("Login failed");
       setIsLoading(false);

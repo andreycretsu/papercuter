@@ -12,39 +12,53 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error("[Auth] Missing credentials");
           return null;
         }
 
-        const supabase = getSupabaseAdmin();
+        try {
+          const supabase = getSupabaseAdmin();
 
-        // Get user from database
-        const { data: user, error } = await supabase
-          .from("users")
-          .select("id, email, password_hash")
-          .eq("email", credentials.email)
-          .single();
+          // Get user from database
+          const { data: user, error } = await supabase
+            .from("users")
+            .select("id, email, password_hash")
+            .eq("email", credentials.email)
+            .single();
 
-        if (error || !user) {
+          if (error) {
+            console.error("[Auth] Database error:", error);
+            return null;
+          }
+
+          if (!user) {
+            console.error("[Auth] User not found:", credentials.email);
+            return null;
+          }
+
+          // Hash the provided password using SHA-256
+          const encoder = new TextEncoder();
+          const data = encoder.encode(credentials.password);
+          const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+          // Compare hashed password
+          if (passwordHash !== user.password_hash) {
+            console.error("[Auth] Invalid password for user:", credentials.email);
+            return null;
+          }
+
+          console.log("[Auth] Login successful:", credentials.email);
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.email.split('@')[0],
+          };
+        } catch (error) {
+          console.error("[Auth] Unexpected error:", error);
           return null;
         }
-
-        // Hash the provided password using SHA-256
-        const encoder = new TextEncoder();
-        const data = encoder.encode(credentials.password);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-        // Compare hashed password
-        if (passwordHash !== user.password_hash) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.email.split('@')[0],
-        };
       },
     }),
   ],
