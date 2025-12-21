@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
+import { X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -482,8 +483,8 @@ export function HomeClient(props: {
             transform: 'translateX(-50%)'
           }}
         >
-          <Card className="border-2 border-primary shadow-2xl bg-background">
-            <div className="flex items-center gap-4 px-6 py-4">
+          <Card className="border border-border shadow-xl bg-background">
+            <div className="flex items-center gap-3 px-4 py-2">
               <span className="text-sm font-medium">
                 {selectedIds.size} papercut{selectedIds.size > 1 ? 's' : ''} selected
               </span>
@@ -519,9 +520,9 @@ export function HomeClient(props: {
                   size="sm"
                   onClick={() => setSelectedIds(new Set())}
                   disabled={isUpdatingStatus || isDeleting}
-                  className="hover:bg-accent"
+                  className="hover:bg-accent h-8 w-8 p-0"
                 >
-                  Cancel
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
