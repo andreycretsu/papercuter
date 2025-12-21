@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '../../components/ui/button';
@@ -316,78 +316,6 @@ export default function Composer() {
           <Label htmlFor="description">Description with screenshot</Label>
           <div className="relative">
             <EditorContent editor={editor} />
-            {editor && (
-              <BubbleMenu
-                editor={editor}
-                tippyOptions={{ duration: 100 }}
-                className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 shadow-lg backdrop-blur"
-              >
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleBold().run()}
-                  className={`h-8 px-2 text-sm font-medium rounded transition-colors ${
-                    editor.isActive('bold') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleItalic().run()}
-                  className={`h-8 px-2 text-sm font-medium italic rounded transition-colors ${
-                    editor.isActive('italic') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  I
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleStrike().run()}
-                  className={`h-8 px-2 text-sm font-medium line-through rounded transition-colors ${
-                    editor.isActive('strike') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  S
-                </button>
-                <div className="mx-1 h-5 w-px bg-border" />
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  className={`h-8 px-2 text-sm font-medium rounded transition-colors ${
-                    editor.isActive('heading', { level: 2 }) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  H2
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                  className={`h-8 px-2 text-sm font-medium rounded transition-colors ${
-                    editor.isActive('heading', { level: 3 }) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  H3
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  className={`h-8 px-2 text-sm font-medium rounded transition-colors ${
-                    editor.isActive('bulletList') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  • List
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  className={`h-8 px-2 text-sm font-medium rounded transition-colors ${
-                    editor.isActive('orderedList') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  1.
-                </button>
-              </BubbleMenu>
-            )}
           </div>
         </div>
 
