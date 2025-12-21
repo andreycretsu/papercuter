@@ -32,25 +32,32 @@ export async function GET() {
     if (!fs.existsSync(versionPath)) {
       return NextResponse.json(
         {
+          version: "0.0.0",
           hash: "unknown",
           date: new Date().toISOString().split('T')[0],
           branch: "unknown",
           timestamp: new Date().toISOString(),
+          downloadUrl: "/api/download-extension",
         },
         { status: 200 }
       );
     }
 
     const versionData = JSON.parse(fs.readFileSync(versionPath, "utf-8"));
-    return NextResponse.json(versionData);
+    return NextResponse.json({
+      ...versionData,
+      downloadUrl: "/api/download-extension",
+    });
   } catch (error) {
     console.error("[Extension Version] Error:", error);
     return NextResponse.json(
       {
+        version: "0.0.0",
         hash: "unknown",
         date: new Date().toISOString().split('T')[0],
         branch: "unknown",
         timestamp: new Date().toISOString(),
+        downloadUrl: "/api/download-extension",
       },
       { status: 200 }
     );

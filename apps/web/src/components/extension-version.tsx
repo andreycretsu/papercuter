@@ -10,6 +10,21 @@ type VersionInfo = {
   timestamp: string;
 };
 
+function formatTimestamp(isoString: string): string {
+  const date = new Date(isoString);
+  const day = date.getDate();
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const year = date.getFullYear();
+  const time = date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
+  return `${day} ${month} ${year}, ${time}`;
+}
+
 export function ExtensionVersion() {
   const [version, setVersion] = React.useState<VersionInfo | null>(null);
 
@@ -26,7 +41,7 @@ export function ExtensionVersion() {
     <p className="text-xs text-muted-foreground mt-3">
       Extension version: <code className="font-mono font-semibold">v{version.version}</code>
       {" "}
-      <span className="opacity-70">({version.hash} - {version.date})</span>
+      <span className="opacity-70">({formatTimestamp(version.timestamp)})</span>
     </p>
   );
 }

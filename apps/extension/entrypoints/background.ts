@@ -102,7 +102,74 @@ async function uploadImageToApp(opts: {
   return { url: uploadJson.url as string };
 }
 
+async function checkForUpdates() {
+  try {
+    // Get local version
+    const versionUrl = browser.runtime.getURL('version.json');
+    const localVersionRes = await fetch(versionUrl);
+    const localVersion = await localVersionRes.json() as { version: string; timestamp: string };
+
+    // Get server version from the web app
+    const stored = await browser.storage.local.get(['papercuts_connect']);
+    const connect = typeof stored['papercuts_connect'] === 'string' ? stored['papercuts_connect'] : '';
+
+    let baseUrl = '';
+    if (connect.startsWith('papercuts:')) {
+      const rest = connect.slice('papercuts:'.length);
+      const [b] = rest.split('#');
+      if (b?.trim()) baseUrl = b.trim().replace(/\/+$/, '');
+    }
+
+    if (!baseUrl) {
+      console.log('[Papercuts Update] No base URL configured, skipping update check');
+      return;
+    }
+
+    console.log('[Papercuts Update] Checking for updates from:', baseUrl);
+    const serverVersionRes = await fetch(`${baseUrl}/api/extension-version`);
+    if (!serverVersionRes.ok) {
+      console.log('[Papercuts Update] Failed to fetch server version');
+      return;
+    }
+
+    const serverVersion = await serverVersionRes.json() as { version: string; timestamp: string; downloadUrl: string };
+
+    console.log('[Papercuts Update] Local version:', localVersion.version, 'Server version:', serverVersion.version);
+
+    // Compare versions
+    if (serverVersion.version !== localVersion.version || serverVersion.timestamp !== localVersion.timestamp) {
+      console.log('[Papercuts Update] New version available!');
+
+      // Store update info
+      await browser.storage.local.set({
+        papercuts_update_available: {
+          version: serverVersion.version,
+          timestamp: serverVersion.timestamp,
+          downloadUrl: serverVersion.downloadUrl,
+          checkedAt: new Date().toISOString(),
+        }
+      });
+
+      // Show badge on extension icon
+      await browser.action.setBadgeText({ text: '!' });
+      await browser.action.setBadgeBackgroundColor({ color: '#10b981' });
+    } else {
+      console.log('[Papercuts Update] Extension is up to date');
+      await browser.storage.local.remove(['papercuts_update_available']);
+      await browser.action.setBadgeText({ text: '' });
+    }
+  } catch (err) {
+    console.error('[Papercuts Update] Update check failed:', err);
+  }
+}
+
 export default defineBackground(() => {
+  // Check for updates on startup
+  checkForUpdates();
+
+  // Check for updates every hour
+  setInterval(checkForUpdates, 60 * 60 * 1000);
+
   // Use proper Chrome extension async message handling
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const msg = message as
