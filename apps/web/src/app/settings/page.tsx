@@ -3,7 +3,7 @@ import { ApiKeyCard } from "@/components/api-key-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExtensionVersion } from "@/components/extension-version";
-import { LogoutCard } from "@/components/settings-client";
+import { LogoutButton } from "@/components/settings-client";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +19,6 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
       <div className="space-y-6">
-        <LogoutCard />
-
         <ApiKeyCard />
 
         <Card className="border border-border p-6">
@@ -46,6 +44,10 @@ export default function SettingsPage() {
           </p>
           <ExtensionVersion />
         </Card>
+
+        <div className="flex justify-end pt-4">
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );

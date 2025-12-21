@@ -71,41 +71,25 @@ export function ApiKeyCard() {
   };
 
   return (
-    <Card className="border border-border p-4">
+    <Card className="border border-border p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[18px] font-semibold">Extension API key</div>
+          <div className="text-xl font-semibold">Extension API key</div>
           <div className="mt-1 text-sm text-muted-foreground">
-            Copy this into the extension popup “API key” field.
+            Paste this into the extension once. It includes the app URL + API key.
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={rotate} disabled={loading || rotating}>
             {rotating ? "Rotating…" : "Rotate"}
           </Button>
-          <Button onClick={copy} disabled={loading || !key}>
+          <Button onClick={copyConnectCode} disabled={loading || !connectCode}>
             Copy
           </Button>
         </div>
       </div>
 
-      <div className="mt-3">
-        <Input value={loading ? "Loading…" : key} readOnly className="h-11" />
-      </div>
-
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[18px] font-semibold">Connect code</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Paste this into the extension once. It includes the app URL + API key.
-          </div>
-        </div>
-        <Button onClick={copyConnectCode} disabled={loading || !connectCode}>
-          Copy
-        </Button>
-      </div>
-
-      <div className="mt-3">
+      <div className="mt-4">
         <Input value={loading ? "Loading…" : connectCode} readOnly className="h-11" />
       </div>
     </Card>
