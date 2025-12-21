@@ -15,15 +15,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TEMPORARY: Allow andreycretsu@gmail.com for testing (Resend sandbox mode)
-    // TODO: Remove this once domain is verified and restore @peopleforce.io restriction
-    if (!email.endsWith("@peopleforce.io") && email !== "andreycretsu@gmail.com") {
-      return NextResponse.json(
-        { error: "Only @peopleforce.io email addresses are allowed" },
-        { status: 403 }
-      );
-    }
-
     const supabase = getSupabaseAdmin();
 
     // Check if user exists
