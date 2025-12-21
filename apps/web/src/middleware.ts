@@ -20,13 +20,15 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth routes)
+     * - api (all API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - login (login page)
      * - signup (signup page)
+     * - forgot-password (forgot password page)
+     * - reset-password (reset password page)
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|login|signup).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|forgot-password|reset-password).*)",
   ],
 };
