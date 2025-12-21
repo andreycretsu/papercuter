@@ -55,8 +55,9 @@ export async function POST(req: NextRequest) {
       });
 
     if (error) {
+      console.error("Failed to create reset token:", error);
       return NextResponse.json(
-        { error: "Failed to create reset token" },
+        { error: "Failed to create reset token", details: error.message },
         { status: 500 }
       );
     }
@@ -88,8 +89,9 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Password reset error:", error);
     return NextResponse.json(
-      { error: "Failed to process password reset request" },
+      { error: "Failed to process password reset request", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
