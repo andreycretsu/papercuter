@@ -473,14 +473,13 @@ export function HomeClient(props: {
       {/* Floating bulk action bar */}
       {selectedIds.size > 0 && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2"
           style={{
-            zIndex: 999999,
-            pointerEvents: 'auto',
             position: 'fixed',
             bottom: '24px',
             left: '50%',
-            transform: 'translateX(-50%)'
+            transform: 'translateX(-50%)',
+            zIndex: 999999,
+            pointerEvents: 'auto'
           }}
         >
           <Card className="border border-border shadow-xl bg-background p-5">
