@@ -354,13 +354,6 @@ export function HomeClient(props: {
                   )}
                 </div>
               </div>
-
-              {/* Results count */}
-              {hasActiveFilters && (
-                <div className="text-sm text-muted-foreground pt-2">
-                  Showing {filteredItems.length} of {items.length} papercuts
-                </div>
-              )}
             </div>
 
             {filteredItems.length === 0 ? (
@@ -477,9 +470,19 @@ export function HomeClient(props: {
       </AlertDialog>
 
       {/* Floating bulk action bar */}
-      {selectedIds.size > 0 && props.userRole === 'admin' && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <Card className="border border-border shadow-lg">
+      {selectedIds.size > 0 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2"
+          style={{
+            zIndex: 999999,
+            pointerEvents: 'auto',
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <Card className="border-2 border-primary shadow-2xl bg-background">
             <div className="flex items-center gap-4 px-6 py-4">
               <span className="text-sm font-medium">
                 {selectedIds.size} papercut{selectedIds.size > 1 ? 's' : ''} selected
@@ -509,6 +512,16 @@ export function HomeClient(props: {
                   disabled={isDeleting || isUpdatingStatus}
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+                <Separator orientation="vertical" className="h-6" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedIds(new Set())}
+                  disabled={isUpdatingStatus || isDeleting}
+                  className="hover:bg-accent"
+                >
+                  Cancel
                 </Button>
               </div>
             </div>

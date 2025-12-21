@@ -5,6 +5,9 @@ import { Label } from '../../components/ui/label';
 import '../globals.css';
 import './App.css';
 
+type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+
 async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
   const res = await fetch(dataUrl);
   return await res.arrayBuffer();
@@ -41,7 +44,8 @@ function App() {
   const parsed = parseConnectCode(connectCode);
   const baseUrl = parsed?.baseUrl ?? '';
   const apiKey = parsed?.apiKey ?? '';
-  const [name, setName] = useState('New papercut');
+  const [name, setName] = useState('');
+  const [module, setModule] = useState<PapercutModule | ''>('');
   const [descriptionText, setDescriptionText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [imageBytes, setImageBytes] = useState<ArrayBuffer | null>(null);
@@ -51,7 +55,8 @@ function App() {
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
 
   const resetDraft = () => {
-    setName('New papercut');
+    setName('');
+    setModule('');
     setDescriptionText('');
     setImageBytes(null);
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
@@ -137,6 +142,17 @@ function App() {
 
   const createFromScratch = async () => {
     if (isSaving) return;
+
+    // Validation
+    if (!name.trim()) {
+      setError('Name is required.');
+      return;
+    }
+    if (!module) {
+      setError('Module is required.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       if (!parsed) {
@@ -148,7 +164,8 @@ function App() {
         type: 'CREATE_ONLY',
         baseUrl,
         apiKey,
-        name: name.trim() || 'New papercut',
+        name: name.trim(),
+        module,
         descriptionText,
       })) as { error?: string };
       if (res?.error) throw new Error(res.error);
@@ -367,12 +384,36 @@ function App() {
           ) : (
             <>
               <div className="field">
-                <div className="label">Name</div>
+                <div className="label">Name *</div>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Short title"
+                  placeholder="What's the papercut?"
                 />
+              </div>
+
+              <div className="field">
+                <div className="label">Module *</div>
+                <select
+                  value={module}
+                  onChange={(e) => setModule(e.target.value as PapercutModule | '')}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid hsl(var(--border))',
+                    backgroundColor: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))',
+                    fontSize: '14px',
+                  }}
+                >
+                  <option value="">Select a module</option>
+                  {PAPERCUT_MODULES.map((mod) => (
+                    <option key={mod} value={mod}>
+                      {mod}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="field">

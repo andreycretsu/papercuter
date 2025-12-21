@@ -33,6 +33,7 @@ type CreateOnlyRequest = {
   baseUrl: string;
   apiKey?: string;
   name: string;
+  module?: string;
   descriptionText?: string;
 };
 
@@ -327,6 +328,7 @@ export default defineBackground(() => {
             headers: withApiKey({ 'content-type': 'application/json' }, msg.apiKey),
             body: JSON.stringify({
               name: msg.name,
+              module: msg.module || null,
               descriptionHtml: textToHtml(msg.descriptionText ?? ''),
               screenshotUrl: null,
             }),
