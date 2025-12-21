@@ -66,12 +66,16 @@ export async function POST(req: NextRequest) {
     const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
 
     // Send password reset email
+    console.log(`[Password Reset] Attempting to send email to ${email}`);
+    console.log(`[Password Reset] Reset URL: ${resetUrl}`);
     const emailResult = await sendPasswordResetEmail(email, resetUrl);
 
     if (!emailResult.success) {
       // Log the error but don't expose it to the user
-      console.error("Failed to send password reset email:", emailResult.error);
+      console.error("[Password Reset] Failed to send email:", emailResult.error);
       // Still return success to prevent email enumeration
+    } else {
+      console.log(`[Password Reset] Email sent successfully to ${email}`);
     }
 
     // For development, also log the URL to console
