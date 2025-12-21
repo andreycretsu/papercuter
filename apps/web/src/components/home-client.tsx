@@ -483,8 +483,8 @@ export function HomeClient(props: {
             transform: 'translateX(-50%)'
           }}
         >
-          <Card className="border border-border shadow-xl bg-background">
-            <div className="flex items-center gap-3 px-4 py-2">
+          <Card className="border border-border shadow-xl bg-background p-5">
+            <div className="flex items-center gap-3">
               <span className="text-sm font-medium">
                 {selectedIds.size} papercut{selectedIds.size > 1 ? 's' : ''} selected
               </span>
