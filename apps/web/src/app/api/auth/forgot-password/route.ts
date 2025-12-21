@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Restrict to @peopleforce.io emails only
-    if (!email.endsWith("@peopleforce.io")) {
+    // TEMPORARY: Allow andreycretsu@gmail.com for testing (Resend sandbox mode)
+    // TODO: Remove this once domain is verified and restore @peopleforce.io restriction
+    if (!email.endsWith("@peopleforce.io") && email !== "andreycretsu@gmail.com") {
       return NextResponse.json(
         { error: "Only @peopleforce.io email addresses are allowed" },
         { status: 403 }
