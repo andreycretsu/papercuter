@@ -103,21 +103,19 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
         </div>
 
-        {papercut.screenshotUrl && (
-          <div className="relative w-full overflow-hidden rounded-lg border border-border">
-            <Image
-              src={papercut.screenshotUrl}
-              alt="Screenshot"
-              width={1200}
-              height={800}
-              className="w-full h-auto object-contain"
-              priority
-            />
-          </div>
-        )}
-
         {papercut.descriptionHtml && (
           <div className="prose prose-neutral max-w-none">
+            <style jsx>{`
+              .prose img {
+                max-width: 672px;
+                width: auto;
+                height: auto;
+                border-radius: 0.5rem;
+                border: 1px solid hsl(var(--border));
+                margin: 0.75rem 0;
+                display: block;
+              }
+            `}</style>
             <div
               dangerouslySetInnerHTML={{ __html: papercut.descriptionHtml }}
               className="text-foreground"

@@ -171,12 +171,21 @@ export default function Composer() {
 
       // Get HTML from TipTap editor and replace data URL with uploaded URL
       let descriptionHtml = editor?.getHTML() ?? '';
+      console.log('[Papercuts] FULL Original descriptionHtml:', descriptionHtml);
+
+      // Count how many images are in the HTML
+      const imgCount = (descriptionHtml.match(/<img/g) || []).length;
+      console.log('[Papercuts] Number of <img> tags in original HTML:', imgCount);
+
       if (uploadedUrl && descriptionHtml) {
         // Replace data URL screenshot with uploaded URL
         descriptionHtml = descriptionHtml.replace(
           /<img[^>]+src="data:image\/png;base64,[^"]+"[^>]*>/g,
           `<img src="${uploadedUrl}" alt="Screenshot" />`
         );
+        const imgCountAfter = (descriptionHtml.match(/<img/g) || []).length;
+        console.log('[Papercuts] Number of <img> tags after replacement:', imgCountAfter);
+        console.log('[Papercuts] FULL After replacement descriptionHtml:', descriptionHtml);
       }
 
       console.log('[Papercuts] Creating papercut...');
@@ -211,8 +220,8 @@ export default function Composer() {
 
       console.log('[Papercuts] Papercut created successfully');
       setDone(true);
-      // Close tab after a moment
-      setTimeout(() => window.close(), 350);
+      // TEMPORARILY: Don't close tab so we can see console logs
+      // setTimeout(() => window.close(), 350);
     } catch (err) {
       console.error('[Papercuts] Error creating papercut:', err);
       setError('Create failed. Check your connection and try again.');

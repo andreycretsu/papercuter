@@ -48,10 +48,15 @@ export async function POST(req: Request) {
   const userEmail = session?.user?.email || null;
 
   try {
+    const imgCount = (descriptionHtml.match(/<img/g) || []).length;
     console.log("[POST /api/papercuts] Creating papercut with:", {
       name: body.name,
       hasDescription: !!descriptionHtml,
+      descriptionHtmlLength: descriptionHtml.length,
+      imageTagCount: imgCount,
+      descriptionHtmlPreview: descriptionHtml.substring(0, 300),
       hasScreenshot: !!screenshotUrl,
+      screenshotUrl,
       userEmail,
       module,
     });
@@ -63,6 +68,8 @@ export async function POST(req: Request) {
       userEmail,
       module: module as any,
     });
+
+    console.log("[POST /api/papercuts] Stored descriptionHtml:", created.descriptionHtml);
 
     console.log("[POST /api/papercuts] Successfully created papercut:", created.id);
     return NextResponse.json({ item: created }, { status: 201 });

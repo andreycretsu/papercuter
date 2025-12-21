@@ -92,7 +92,16 @@ async function cropToPngBytes(opts: {
   return await blob.arrayBuffer();
 }
 
+let isCapturing = false;
+
 async function selectAreaBytes(): Promise<ArrayBuffer | null> {
+  // Prevent multiple capture instances
+  if (isCapturing) {
+    console.log('[Papercuts] Capture already in progress, ignoring...');
+    return null;
+  }
+
+  isCapturing = true;
   const { overlay, box } = createOverlay();
   document.documentElement.appendChild(overlay);
 
@@ -204,7 +213,9 @@ async function selectAreaBytes(): Promise<ArrayBuffer | null> {
     true
   );
 
-  return await promise;
+  const result = await promise;
+  isCapturing = false;
+  return result;
 }
 
 function createPreviewModal(opts: {
