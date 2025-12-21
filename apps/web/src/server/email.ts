@@ -29,7 +29,7 @@ export async function sendPasswordResetEmail(
     }
 
     await client.emails.send({
-      from: "Papercuts <noreply@resend.dev>", // You can customize this with your verified domain
+      from: "Papercuts <noreply@cleaqops.com>",
       to: email,
       subject: "Reset your Papercuts password",
       html: `
