@@ -1,13 +1,34 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialize Resend only when API key is available
+let resend: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function sendPasswordResetEmail(
   email: string,
   resetUrl: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await resend.emails.send({
+    const client = getResendClient();
+
+    if (!client) {
+      console.warn("RESEND_API_KEY not configured - email will not be sent");
+      return {
+        success: false,
+        error: "Email service not configured",
+      };
+    }
+
+    await client.emails.send({
       from: "Papercuts <noreply@resend.dev>", // You can customize this with your verified domain
       to: email,
       subject: "Reset your Papercuts password",
