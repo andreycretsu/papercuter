@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
+import bcrypt from "bcrypt";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,7 +13,6 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.error("[Auth] Missing credentials");
           return null;
         }
 
@@ -26,30 +26,16 @@ export const authOptions: NextAuthOptions = {
             .eq("email", credentials.email)
             .single();
 
-          if (error) {
-            console.error("[Auth] Database error:", error);
+          if (error || !user) {
             return null;
           }
 
-          if (!user) {
-            console.error("[Auth] User not found:", credentials.email);
+          // Verify password using bcrypt
+          const passwordMatch = await bcrypt.compare(credentials.password, user.password_hash);
+
+          if (!passwordMatch) {
             return null;
           }
-
-          // Hash the provided password using SHA-256
-          const encoder = new TextEncoder();
-          const data = encoder.encode(credentials.password);
-          const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-          // Compare hashed password
-          if (passwordHash !== user.password_hash) {
-            console.error("[Auth] Invalid password for user:", credentials.email);
-            return null;
-          }
-
-          console.log("[Auth] Login successful:", credentials.email);
           return {
             id: user.id,
             email: user.email,
@@ -57,7 +43,6 @@ export const authOptions: NextAuthOptions = {
             role: user.role || 'editor',
           };
         } catch (error) {
-          console.error("[Auth] Unexpected error:", error);
           return null;
         }
       },
@@ -78,7 +63,6 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.role = (user as any).role || 'editor';
       }
-      console.log("[Auth] JWT callback - token:", { id: token.id, email: token.email, role: token.role });
       return token;
     },
     async session({ session, token }) {
@@ -86,7 +70,6 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         (session.user as any).role = token.role || 'editor';
       }
-      console.log("[Auth] Session callback - session:", session);
       return session;
     },
   },

@@ -18,8 +18,20 @@ function ensureCloudinaryConfigured() {
   }
 }
 
+// Allowed image types
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml'
+];
+
+// Max file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 export async function POST(req: Request) {
-  console.log('[Papercuts API] Upload request received');
   const unauthorized = await requirePapercutsApiKey(req);
   if (unauthorized) return unauthorized;
 
@@ -30,24 +42,43 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
 
+  // Validate file type
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json(
+      { error: `Invalid file type. Allowed types: ${ALLOWED_TYPES.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB` },
+      { status: 400 }
+    );
+  }
+
+  // Validate filename (prevent path traversal)
+  if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+    return NextResponse.json(
+      { error: 'Invalid filename' },
+      { status: 400 }
+    );
+  }
+
   try {
     ensureCloudinaryConfigured();
-    console.log('[Papercuts API] Starting Cloudinary upload, file size:', file.size);
     const arrayBuffer = await file.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const dataUri = `data:${file.type || "image/png"};base64,${base64}`;
 
-    const startTime = Date.now();
     const uploaded = await cloudinary.uploader.upload(dataUri, {
       folder: "papercuts",
       resource_type: "image",
     });
-    const uploadTime = Date.now() - startTime;
 
-    console.log(`[Papercuts API] Upload completed in ${uploadTime}ms:`, uploaded.secure_url);
     return NextResponse.json({ url: uploaded.secure_url });
   } catch (e) {
-    console.error('[Papercuts API] Upload failed:', e);
     return NextResponse.json(
       { error: "Upload failed" },
       { status: 500 }

@@ -20,7 +20,6 @@ export async function requirePapercutsApiKey(
   // Also allow authenticated users (web UI with NextAuth session)
   const session = await getServerSession(authOptions);
   if (session?.user?.email) {
-    console.log("[API Key] Authenticated user bypassing API key check:", session.user.email);
     return null;
   }
 
@@ -29,7 +28,6 @@ export async function requirePapercutsApiKey(
 
   const got = req.headers.get("x-papercuts-key")?.trim();
   if (!got || got !== expected) {
-    console.error("[API Key] Unauthorized request - no valid session or API key");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;

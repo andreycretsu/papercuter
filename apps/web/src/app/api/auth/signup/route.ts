@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
+import bcrypt from "bcrypt";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,12 +45,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password with Web Crypto API (Edge Runtime compatible)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Hash password with bcrypt (10 rounds)
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
     const { error } = await supabase
@@ -63,7 +60,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    console.error("[Sign Up] Error:", error);
     return NextResponse.json(
       { error: "Failed to create account" },
       { status: 500 }

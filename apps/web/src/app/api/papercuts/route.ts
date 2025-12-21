@@ -8,12 +8,16 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export async function GET() {
-  // Reads are allowed without API key (so the web UI works normally).
+  // Require authentication for reading papercuts
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const items = await listPapercutsSupabase();
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("[GET /api/papercuts] Error loading papercuts:", error);
     return NextResponse.json(
       { error: "Failed to load papercuts" },
       { status: 500 }
@@ -48,19 +52,6 @@ export async function POST(req: Request) {
   const userEmail = session?.user?.email || null;
 
   try {
-    const imgCount = (descriptionHtml.match(/<img/g) || []).length;
-    console.log("[POST /api/papercuts] Creating papercut with:", {
-      name: body.name,
-      hasDescription: !!descriptionHtml,
-      descriptionHtmlLength: descriptionHtml.length,
-      imageTagCount: imgCount,
-      descriptionHtmlPreview: descriptionHtml.substring(0, 300),
-      hasScreenshot: !!screenshotUrl,
-      screenshotUrl,
-      userEmail,
-      module,
-    });
-
     const created = await createPapercutSupabase({
       name: body.name,
       descriptionHtml,
@@ -69,18 +60,8 @@ export async function POST(req: Request) {
       module: module as any,
     });
 
-    console.log("[POST /api/papercuts] Stored descriptionHtml:", created.descriptionHtml);
-
-    console.log("[POST /api/papercuts] Successfully created papercut:", created.id);
     return NextResponse.json({ item: created }, { status: 201 });
   } catch (error) {
-    console.error("[POST /api/papercuts] Error creating papercut:", error);
-    console.error("[POST /api/papercuts] Error details:", {
-      message: (error as any)?.message,
-      code: (error as any)?.code,
-      details: (error as any)?.details,
-      hint: (error as any)?.hint,
-    });
     return NextResponse.json(
       {
         error: "Failed to create papercut",
