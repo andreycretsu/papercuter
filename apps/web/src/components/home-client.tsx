@@ -272,9 +272,9 @@ export function HomeClient(props: {
           <>
             {/* Sticky search and filters */}
             <div className="sticky top-[89px] z-10 bg-background pb-4 mb-4 border-b border-border">
-              <div className="flex flex-col gap-3 pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
                 {/* Segmented Status Filter */}
-                <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-fit">
+                <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                   <button
                     onClick={() => setStatusFilter('all')}
                     className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
@@ -307,52 +307,51 @@ export function HomeClient(props: {
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="flex-1">
-                    <Input
-                      type="search"
-                      placeholder="Search papercuts..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                <div className="flex-1">
+                  <Input
+                    type="search"
+                    placeholder="Search papercuts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <select
+                    value={moduleFilter}
+                    onChange={(e) => setModuleFilter(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="all">All modules</option>
+                    {PAPERCUT_MODULES.map((mod) => (
+                      <option key={mod} value={mod}>
+                        {mod}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={emailFilter}
+                    onChange={(e) => setEmailFilter(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="all">All users</option>
+                    {uniqueEmails.map((email) => (
+                      <option key={email} value={email}>
+                        {email}
+                      </option>
+                    ))}
+                  </select>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resetFilters}
                       className="h-9"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={moduleFilter}
-                      onChange={(e) => setModuleFilter(e.target.value)}
-                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      <option value="all">All modules</option>
-                      {PAPERCUT_MODULES.map((mod) => (
-                        <option key={mod} value={mod}>
-                          {mod}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={emailFilter}
-                      onChange={(e) => setEmailFilter(e.target.value)}
-                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <option value="all">All users</option>
-                      {uniqueEmails.map((email) => (
-                        <option key={email} value={email}>
-                          {email}
-                        </option>
-                      ))}
-                    </select>
-                    {hasActiveFilters && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={resetFilters}
-                        className="h-9"
-                      >
-                        Clear filters
-                      </Button>
-                    )}
-                  </div>
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
               </div>
 
