@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import type { Papercut } from "@/server/papercuts-supabase-store";
-import { PAPERCUT_MODULES } from "@/server/papercuts-supabase-store";
+import type { Papercut, PapercutStatus } from "@/server/papercuts-supabase-store";
+import { PAPERCUT_MODULES, PAPERCUT_STATUSES } from "@/server/papercuts-supabase-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -34,20 +34,23 @@ export function HomeClient(props: {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = React.useState("");
   const [moduleFilter, setModuleFilter] = React.useState<string>("all");
   const [emailFilter, setEmailFilter] = React.useState<string>("all");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery || moduleFilter !== "all" || emailFilter !== "all";
+  const hasActiveFilters = searchQuery || moduleFilter !== "all" || emailFilter !== "all" || statusFilter !== "all";
 
   // Reset all filters
   const resetFilters = () => {
     setSearchQuery("");
     setModuleFilter("all");
     setEmailFilter("all");
+    setStatusFilter("all");
   };
 
   const refresh = async () => {
@@ -111,9 +114,14 @@ export function HomeClient(props: {
         return false;
       }
 
+      // Status filter
+      if (statusFilter !== "all" && p.status !== statusFilter) {
+        return false;
+      }
+
       return true;
     });
-  }, [items, searchQuery, moduleFilter, emailFilter]);
+  }, [items, searchQuery, moduleFilter, emailFilter, statusFilter]);
 
   const handleDeleteClick = () => {
     if (selectedIds.size === 0) return;
@@ -142,6 +150,35 @@ export function HomeClient(props: {
       toast.error("Couldn't delete papercuts");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const bulkUpdateStatus = async (newStatus: PapercutStatus) => {
+    if (selectedIds.size === 0 || isUpdatingStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      const updatePromises = Array.from(selectedIds).map((id) =>
+        fetch(`/api/papercuts/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        })
+      );
+
+      const results = await Promise.all(updatePromises);
+      const allSuccess = results.every((res) => res.ok);
+
+      if (!allSuccess) {
+        throw new Error("Some updates failed");
+      }
+
+      toast.success(`Updated ${selectedIds.size} papercut${selectedIds.size > 1 ? 's' : ''} to ${newStatus}`);
+      await refresh();
+    } catch {
+      toast.error("Couldn't update papercut status");
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -181,21 +218,6 @@ export function HomeClient(props: {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {selectedIds.size > 0 && props.userRole === 'admin' && (
-                <>
-                  <span className="text-sm text-muted-foreground">
-                    {selectedIds.size} selected
-                  </span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteClick}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Deleting..." : "Delete selected"}
-                  </Button>
-                </>
-              )}
               <Link href="/">
                 <Button variant="outline" className="h-10">
                   Dashboard
@@ -261,6 +283,18 @@ export function HomeClient(props: {
                 />
               </div>
               <div className="flex gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="all">All statuses</option>
+                  {PAPERCUT_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status === 'open' ? 'Open' : 'Resolved'}
+                    </option>
+                  ))}
+                </select>
                 <select
                   value={moduleFilter}
                   onChange={(e) => setModuleFilter(e.target.value)}
@@ -351,6 +385,13 @@ export function HomeClient(props: {
                                 {p.module}
                               </span>
                             )}
+                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset flex-shrink-0 ${
+                              p.status === 'resolved'
+                                ? 'bg-green-50 text-green-700 ring-green-700/10'
+                                : 'bg-yellow-50 text-yellow-700 ring-yellow-700/10'
+                            }`}>
+                              {p.status === 'resolved' ? 'Resolved' : 'Open'}
+                            </span>
                           </div>
                           <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                             <div>{new Date(p.createdAt).toLocaleString()}</div>
@@ -411,6 +452,46 @@ export function HomeClient(props: {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating bulk action bar */}
+      {selectedIds.size > 0 && props.userRole === 'admin' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Card className="border border-border shadow-lg">
+            <div className="flex items-center gap-4 px-6 py-4">
+              <span className="text-sm font-medium">
+                {selectedIds.size} papercut{selectedIds.size > 1 ? 's' : ''} selected
+              </span>
+              <Separator orientation="vertical" className="h-6" />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkUpdateStatus('resolved')}
+                  disabled={isUpdatingStatus || isDeleting}
+                >
+                  Mark as Resolved
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkUpdateStatus('open')}
+                  disabled={isUpdatingStatus || isDeleting}
+                >
+                  Mark as Open
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting || isUpdatingStatus}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

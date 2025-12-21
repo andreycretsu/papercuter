@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+type PapercutStatus = 'open' | 'resolved';
 
 type Papercut = {
   id: string;
@@ -17,12 +18,15 @@ type Papercut = {
   createdAt: string;
   userEmail?: string | null;
   module?: PapercutModule | null;
+  status: PapercutStatus;
 };
 
 export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
+  const [currentStatus, setCurrentStatus] = React.useState<PapercutStatus>(papercut.status);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -46,6 +50,32 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
     }
   };
 
+  const handleResolve = async () => {
+    if (isUpdatingStatus) return;
+
+    const newStatus: PapercutStatus = currentStatus === 'open' ? 'resolved' : 'open';
+    setIsUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/papercuts/${papercut.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      setCurrentStatus(newStatus);
+      toast.success(newStatus === 'resolved' ? "Papercut resolved" : "Papercut reopened");
+      router.refresh();
+    } catch {
+      toast.error("Couldn't update papercut status");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
     <Card className="border border-border p-8">
       <div className="space-y-6">
@@ -60,6 +90,13 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                   {papercut.module}
                 </span>
               )}
+              <span className={`inline-flex items-center rounded-md px-2.5 py-1.5 text-sm font-medium ring-1 ring-inset ${
+                currentStatus === 'resolved'
+                  ? 'bg-green-50 text-green-700 ring-green-700/10'
+                  : 'bg-yellow-50 text-yellow-700 ring-yellow-700/10'
+              }`}>
+                {currentStatus === 'resolved' ? 'Resolved' : 'Open'}
+              </span>
             </div>
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
               <div>Created {new Date(papercut.createdAt).toLocaleString()}</div>
@@ -72,6 +109,16 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!showConfirm && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResolve}
+                disabled={isUpdatingStatus}
+              >
+                {isUpdatingStatus ? "Updating..." : currentStatus === 'open' ? "Resolve" : "Reopen"}
+              </Button>
+            )}
             {showConfirm ? (
               <>
                 <Button

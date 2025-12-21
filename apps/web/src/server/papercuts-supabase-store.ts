@@ -1,8 +1,10 @@
 import { getSupabaseAdmin } from "@/server/supabase-admin";
 
 export type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+export type PapercutStatus = 'open' | 'resolved';
 
 export const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+export const PAPERCUT_STATUSES: PapercutStatus[] = ['open', 'resolved'];
 
 export type Papercut = {
   id: string;
@@ -12,6 +14,7 @@ export type Papercut = {
   createdAt: string;
   userEmail?: string | null;
   module?: PapercutModule | null;
+  status: PapercutStatus;
 };
 
 type DbRow = {
@@ -22,14 +25,21 @@ type DbRow = {
   created_at: string;
   user_email: string | null;
   module: string | null;
+  status: string;
 };
 
-export async function listPapercutsSupabase(): Promise<Papercut[]> {
+export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Promise<Papercut[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  let query = supabase
     .from("papercuts")
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
     .order("created_at", { ascending: false });
+
+  if (statusFilter) {
+    query = query.eq("status", statusFilter);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   const rows = (data ?? []) as DbRow[];
@@ -41,6 +51,7 @@ export async function listPapercutsSupabase(): Promise<Papercut[]> {
     createdAt: r.created_at,
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
+    status: (r.status || 'open') as PapercutStatus,
   }));
 }
 
@@ -48,7 +59,7 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
   const supabase = getSupabaseAdmin();
   const { data, error} = await supabase
     .from("papercuts")
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
     .eq("id", id)
     .single();
 
@@ -62,6 +73,7 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
     createdAt: r.created_at,
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
+    status: (r.status || 'open') as PapercutStatus,
   };
 }
 
@@ -87,7 +99,7 @@ export async function createPapercutSupabase(input: {
   const { data, error } = await supabase
     .from("papercuts")
     .insert(insert)
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
     .single();
 
   if (error) {
@@ -103,7 +115,21 @@ export async function createPapercutSupabase(input: {
     createdAt: r.created_at,
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
+    status: (r.status || 'open') as PapercutStatus,
   };
+}
+
+export async function updatePapercutStatus(id: string, status: PapercutStatus): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("papercuts")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[updatePapercutStatus] Database error:", error);
+    throw error;
+  }
 }
 
 
