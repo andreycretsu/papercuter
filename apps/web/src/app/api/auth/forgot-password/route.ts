@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
+import { sendPasswordResetEmail } from "@/server/email";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -60,12 +61,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // In a real app, you would send an email here with the reset link
-    // For now, we'll just return the token (you should send it via email in production)
+    // Generate reset URL
     const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
 
-    // TODO: Send email with resetUrl
-    // For development, log the URL
+    // Send password reset email
+    const emailResult = await sendPasswordResetEmail(email, resetUrl);
+
+    if (!emailResult.success) {
+      // Log the error but don't expose it to the user
+      console.error("Failed to send password reset email:", emailResult.error);
+      // Still return success to prevent email enumeration
+    }
+
+    // For development, also log the URL to console
     if (process.env.NODE_ENV === "development") {
       console.log(`Password reset URL for ${email}: ${resetUrl}`);
     }
