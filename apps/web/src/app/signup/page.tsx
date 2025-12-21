@@ -99,11 +99,6 @@ export default function SignUpPage() {
                     setEmailError(null);
                   }
                 }}
-                onBlur={() => {
-                  if (!email.trim()) {
-                    setEmailError("Email is required.");
-                  }
-                }}
                 placeholder="Enter your email"
                 className={emailError ? "border-destructive" : ""}
                 autoFocus
@@ -125,13 +120,6 @@ export default function SignUpPage() {
                     setPasswordError(null);
                   }
                 }}
-                onBlur={() => {
-                  if (!password.trim()) {
-                    setPasswordError("Password is required.");
-                  } else if (password.length < 8) {
-                    setPasswordError("Password must be at least 8 characters.");
-                  }
-                }}
                 placeholder="Create password (min 8 characters)"
                 className={passwordError ? "border-destructive" : ""}
               />
@@ -150,11 +138,6 @@ export default function SignUpPage() {
                   setConfirmPassword(e.target.value);
                   if (confirmPasswordError && e.target.value.trim()) {
                     setConfirmPasswordError(null);
-                  }
-                }}
-                onBlur={() => {
-                  if (password && confirmPassword && password !== confirmPassword) {
-                    setConfirmPasswordError("Passwords do not match.");
                   }
                 }}
                 placeholder="Confirm your password"

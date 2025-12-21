@@ -94,11 +94,6 @@ export default function LoginPage() {
                     setEmailError(null);
                   }
                 }}
-                onBlur={() => {
-                  if (!email.trim()) {
-                    setEmailError("Email is required.");
-                  }
-                }}
                 placeholder="Enter your email"
                 className={emailError ? "border-destructive" : ""}
                 autoFocus
@@ -123,11 +118,6 @@ export default function LoginPage() {
                   setPassword(e.target.value);
                   if (passwordError && e.target.value.trim()) {
                     setPasswordError(null);
-                  }
-                }}
-                onBlur={() => {
-                  if (!password.trim()) {
-                    setPasswordError("Password is required.");
                   }
                 }}
                 placeholder="Enter password"
