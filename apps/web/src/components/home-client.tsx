@@ -273,7 +273,7 @@ export function HomeClient(props: {
           <>
             {/* Sticky search and filters */}
             <div className="sticky top-[89px] z-10 bg-background pb-4 mb-4 border-b border-border">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 {/* Segmented Status Filter */}
                 <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                   <button
