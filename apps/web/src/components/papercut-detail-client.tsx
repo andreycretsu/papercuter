@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -110,14 +111,21 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
           <div className="flex items-center gap-2">
             {!showConfirm && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResolve}
-                disabled={isUpdatingStatus}
-              >
-                {isUpdatingStatus ? "Updating..." : currentStatus === 'open' ? "Resolve" : "Reopen"}
-              </Button>
+              <>
+                <Link href={`/papercuts/${papercut.id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    Edit
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResolve}
+                  disabled={isUpdatingStatus}
+                >
+                  {isUpdatingStatus ? "Updating..." : currentStatus === 'open' ? "Resolve" : "Reopen"}
+                </Button>
+              </>
             )}
             {showConfirm ? (
               <>

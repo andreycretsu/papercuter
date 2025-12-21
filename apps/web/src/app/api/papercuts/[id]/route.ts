@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
 import { requirePapercutsApiKey } from "@/server/api-key";
-import { updatePapercutStatus, PAPERCUT_STATUSES } from "@/server/papercuts-supabase-store";
-import type { PapercutStatus } from "@/server/papercuts-supabase-store";
+import { updatePapercutStatus, PAPERCUT_STATUSES, PAPERCUT_MODULES } from "@/server/papercuts-supabase-store";
+import type { PapercutStatus, PapercutModule } from "@/server/papercuts-supabase-store";
 
 export async function DELETE(
   req: NextRequest,
@@ -59,6 +59,62 @@ export async function PATCH(
     console.error("[Update Papercut Status] Error:", error);
     return NextResponse.json(
       { error: "Failed to update papercut status" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const unauthorized = await requirePapercutsApiKey(req);
+  if (unauthorized) return unauthorized;
+
+  const { id } = await params;
+
+  const body = (await req.json().catch(() => null)) as null | {
+    name?: unknown;
+    descriptionHtml?: unknown;
+    module?: unknown;
+  };
+
+  if (!body || typeof body.name !== "string" || !body.name.trim()) {
+    return NextResponse.json(
+      { error: "Name is required" },
+      { status: 400 }
+    );
+  }
+
+  const name = body.name.trim();
+  const descriptionHtml = typeof body.descriptionHtml === "string" ? body.descriptionHtml : "";
+  const module = typeof body.module === "string" && body.module.trim() ? body.module : null;
+
+  if (module && !PAPERCUT_MODULES.includes(module as PapercutModule)) {
+    return NextResponse.json(
+      { error: "Invalid module" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("papercuts")
+      .update({
+        name,
+        description_html: descriptionHtml,
+        module,
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Update Papercut] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to update papercut" },
       { status: 500 }
     );
   }
