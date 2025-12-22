@@ -5,9 +5,9 @@ import { Label } from '../../components/ui/label';
 import '../globals.css';
 import './App.css';
 
-type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk' | 'Interface';
 type PapercutType = 'UXUI' | 'Feature Idea';
-const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk', 'Interface'];
 const PAPERCUT_TYPES: PapercutType[] = ['UXUI', 'Feature Idea'];
 
 async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {

@@ -1,10 +1,10 @@
 import { getSupabaseAdmin } from "@/server/supabase-admin";
 
-export type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+export type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk' | 'Interface';
 export type PapercutStatus = 'open' | 'resolved';
 export type PapercutType = 'UXUI' | 'Feature Idea';
 
-export const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+export const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk', 'Interface'];
 export const PAPERCUT_STATUSES: PapercutStatus[] = ['open', 'resolved'];
 export const PAPERCUT_TYPES: PapercutType[] = ['UXUI', 'Feature Idea'];
 

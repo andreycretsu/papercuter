@@ -76,6 +76,60 @@ function buildComposerUrl(opts: { screenshotUrl?: string; sourceTabId?: number }
   return u.toString();
 }
 
+function isRestrictedUrl(url: string | undefined) {
+  if (!url) return true;
+  return (
+    url.startsWith('chrome://') ||
+    url.startsWith('chrome-extension://') ||
+    url.startsWith('edge://') ||
+    url.startsWith('about:') ||
+    url.startsWith('file://')
+  );
+}
+
+async function openPopupTab() {
+  const url = browser.runtime.getURL('popup.html');
+  try {
+    await browser.tabs.create({ url, active: true });
+  } catch (err) {
+    console.warn('[Papercuts BG] Failed to open popup tab:', err);
+  }
+}
+
+async function captureVisibleUploadAndOpenComposer(opts: {
+  tab: { id: number; windowId?: number };
+  baseUrl?: string;
+  apiKey?: string;
+}) {
+  const baseUrl = normalizeBaseUrl(opts.baseUrl);
+  const apiKey = (opts.apiKey ?? '').trim() || undefined;
+
+  if (!apiKey) {
+    console.warn('[Papercuts BG] Missing API key. Opening popup so user can paste Connect code.');
+    await openPopupTab();
+    return;
+  }
+
+  console.log('[Papercuts BG] Falling back to full visible capture...');
+  const dataUrl = await browser.tabs.captureVisibleTab(opts.tab.windowId, { format: 'png' });
+  const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
+
+  const uploaded = await uploadImageToApp({ baseUrl, apiKey, imageBytes });
+  if ('error' in uploaded) {
+    console.error('[Papercuts BG] Upload failed during shortcut fallback:', uploaded.error);
+    await openPopupTab();
+    return;
+  }
+
+  const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: opts.tab.id });
+  try {
+    await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
+  } catch (windowErr) {
+    console.warn('[Papercuts BG] Failed to create composer window in fallback, opening tab:', windowErr);
+    await browser.tabs.create({ url, active: true });
+  }
+}
+
 async function uploadImageToApp(opts: {
   baseUrl: string;
   apiKey?: string;
@@ -370,6 +424,18 @@ export default defineBackground(() => {
   });
 
   browser.commands.onCommand.addListener(async (command) => {
+    // Debug signal: if this command is firing, you'll see a quick badge flash on the extension icon.
+    // (Helps distinguish "Chrome didn't deliver shortcut" vs "capture flow failed".)
+    try {
+      await browser.action.setBadgeBackgroundColor({ color: '#2563eb' });
+      await browser.action.setBadgeText({ text: '●' });
+      setTimeout(() => {
+        browser.action.setBadgeText({ text: '' }).catch(() => {});
+      }, 800);
+    } catch {
+      // ignore
+    }
+
     if (command !== 'capture_papercut') return;
     const [tab] = await browser.tabs.query({
       active: true,
@@ -387,6 +453,26 @@ export default defineBackground(() => {
       if (b?.trim()) baseUrl = b.trim();
       if (k?.trim()) apiKey = k.trim();
     }
-    await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION_OPEN_COMPOSER', baseUrl, apiKey });
+
+    // Try the best UX first: area-selection overlay in the page.
+    // If the content script isn't available (newly installed, needs refresh) or the URL is restricted,
+    // fall back to a full visible capture so the shortcut still "does something".
+    try {
+      if (isRestrictedUrl(tab.url)) throw new Error('Restricted URL');
+      await browser.tabs.sendMessage(tab.id, { type: 'START_SELECTION_OPEN_COMPOSER', baseUrl, apiKey });
+    } catch (err) {
+      const msg = String((err as any)?.message ?? err ?? '');
+      console.warn('[Papercuts BG] Shortcut overlay failed, using fallback:', msg);
+      try {
+        await captureVisibleUploadAndOpenComposer({
+          tab: { id: tab.id, windowId: tab.windowId },
+          baseUrl,
+          apiKey,
+        });
+      } catch (fallbackErr) {
+        console.error('[Papercuts BG] Shortcut fallback also failed:', fallbackErr);
+        await openPopupTab();
+      }
+    }
   });
 });

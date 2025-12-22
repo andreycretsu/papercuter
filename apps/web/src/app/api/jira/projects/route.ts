@@ -39,9 +39,17 @@ export async function GET() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Jira] Failed to fetch projects:', errorText);
+      console.error('[Jira] Failed to fetch projects:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        domain: jiraDomain
+      });
       return NextResponse.json(
-        { error: 'Failed to fetch Jira projects' },
+        {
+          error: `Failed to fetch Jira projects: ${response.status} ${response.statusText}`,
+          details: errorText
+        },
         { status: response.status }
       );
     }

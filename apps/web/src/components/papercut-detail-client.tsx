@@ -32,7 +32,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { SwipeToResolve } from "@/components/swipe-to-resolve";
 
-type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk' | 'Interface';
 type PapercutStatus = 'open' | 'resolved';
 type PapercutType = 'UXUI' | 'Feature Idea';
 
