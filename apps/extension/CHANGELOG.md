@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Minor (0.X.0)**: New features, significant improvements
 - **Patch (0.0.X)**: Bug fixes, small improvements
 
+## [1.1.0] - 2025-12-22
+
+### Added
+- Type selector for papercuts (UXUI or Feature Idea)
+- UXUI is pre-selected as the default type
+
+### Changed
+- Composer form now includes type field
+- API calls now send type with papercut data
+
 
 
 
