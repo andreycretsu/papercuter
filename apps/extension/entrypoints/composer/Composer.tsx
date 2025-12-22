@@ -10,7 +10,9 @@ import '../globals.css';
 import './Composer.css';
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+type PapercutType = 'UXUI' | 'Feature Idea';
 const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+const PAPERCUT_TYPES: PapercutType[] = ['UXUI', 'Feature Idea'];
 
 function parseConnectCode(code: string): { baseUrl: string; apiKey: string } | null {
   const trimmed = (code ?? '').trim();
@@ -38,6 +40,7 @@ export default function Composer() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [module, setModule] = useState<PapercutModule | ''>('');
   const [moduleError, setModuleError] = useState<string | null>(null);
+  const [type, setType] = useState<PapercutType>('UXUI');
   const [isSaving, setIsSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -200,6 +203,7 @@ export default function Composer() {
           descriptionHtml,
           screenshotUrl: uploadedUrl,
           module: module || null,
+          type,
         }),
       });
 
@@ -310,6 +314,22 @@ export default function Composer() {
           {moduleError && (
             <p className="text-sm text-destructive">{moduleError}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="type">Type</Label>
+          <select
+            id="type"
+            value={type}
+            onChange={(e) => setType(e.target.value as PapercutType)}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            {PAPERCUT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">
