@@ -147,11 +147,43 @@ Then:
 - drag to select an area
 - it will upload the image to the web app and create the Papercut
 
-## Jira (later)
+## Jira Integration
 
-There’s a placeholder endpoint:
-- `POST /api/jira/create-issue` → returns **501 Not Implemented**
+The app can create Jira issues from papercuts. This works with both standard Jira projects and Jira Product Discovery.
 
-Next step will be adding Jira auth + issue creation + screenshot attachments.
+### Setup
+
+1. Generate a Jira API token at [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+2. Add these environment variables to your deployment:
+
+```bash
+JIRA_DOMAIN=yourcompany.atlassian.net
+JIRA_EMAIL=your-email@example.com
+JIRA_API_TOKEN=your-api-token
+JIRA_PROJECT_KEY=PROJ
+```
+
+3. Restart your application
+
+### Usage
+
+1. Open any papercut detail page
+2. Click the three-dots menu (⋮) in the top right
+3. Select "Create Jira Issue"
+4. A new Jira task will be created with:
+   - Summary: papercut name
+   - Description: papercut description with module and type metadata
+   - Attachment: screenshot (if available)
+5. You'll get a toast notification with a link to the created Jira issue
+
+### How it works
+
+- **API Endpoint**: `POST /api/jira/create-issue`
+- **Authentication**: Basic Auth using email + API token
+- **Field Mapping**:
+  - Papercut name → Jira summary
+  - Papercut description → Jira description (with module/type prepended)
+  - Screenshot URL → Jira attachment (downloaded and uploaded)
+- **Issue Type**: Creates as "Task" by default (customizable in code)
 
 

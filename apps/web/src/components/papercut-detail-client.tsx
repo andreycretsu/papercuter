@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
-import { MoreVertical, Pencil, Trash2, RotateCcw } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, RotateCcw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -38,6 +38,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
   const [currentStatus, setCurrentStatus] = React.useState<PapercutStatus>(papercut.status);
+  const [isCreatingJiraIssue, setIsCreatingJiraIssue] = React.useState(false);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -84,6 +85,49 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
       toast.error("Couldn't update papercut status");
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleCreateJiraIssue = async () => {
+    if (isCreatingJiraIssue) return;
+
+    setIsCreatingJiraIssue(true);
+    try {
+      // Strip HTML tags from description for plain text
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = papercut.descriptionHtml;
+      const description = tempDiv.textContent || tempDiv.innerText || '';
+
+      const res = await fetch('/api/jira/create-issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          papercutId: papercut.id,
+          name: papercut.name,
+          description,
+          screenshotUrl: papercut.screenshotUrl,
+          module: papercut.module,
+          type: papercut.type
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create Jira issue');
+      }
+
+      toast.success(`Jira issue created: ${data.issueKey}`, {
+        description: 'Click to open in Jira',
+        action: {
+          label: 'Open',
+          onClick: () => window.open(data.issueUrl, '_blank')
+        }
+      });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create Jira issue');
+    } finally {
+      setIsCreatingJiraIssue(false);
     }
   };
 
@@ -159,6 +203,14 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                       <Pencil className="h-4 w-4" />
                       Edit
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleCreateJiraIssue}
+                    disabled={isCreatingJiraIssue}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {isCreatingJiraIssue ? "Creating..." : "Create Jira Issue"}
                   </DropdownMenuItem>
                   {currentStatus === 'resolved' && (
                     <DropdownMenuItem

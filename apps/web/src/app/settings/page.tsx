@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExtensionVersion } from "@/components/extension-version";
 import { LogoutButton } from "@/components/settings-client";
+import { JiraSettingsCard } from "@/components/jira-settings-card";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         <ApiKeyCard />
+
+        <JiraSettingsCard />
 
         <Card className="border border-border p-6">
           <h2 className="text-xl font-semibold mb-2">Browser Extension</h2>
