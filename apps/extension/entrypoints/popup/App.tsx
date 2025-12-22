@@ -6,7 +6,9 @@ import '../globals.css';
 import './App.css';
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
+type PapercutType = 'UXUI' | 'Feature Idea';
 const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
+const PAPERCUT_TYPES: PapercutType[] = ['UXUI', 'Feature Idea'];
 
 async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
   const res = await fetch(dataUrl);
@@ -46,6 +48,7 @@ function App() {
   const apiKey = parsed?.apiKey ?? '';
   const [name, setName] = useState('');
   const [module, setModule] = useState<PapercutModule | ''>('');
+  const [type, setType] = useState<PapercutType>('UXUI');
   const [descriptionText, setDescriptionText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [imageBytes, setImageBytes] = useState<ArrayBuffer | null>(null);
@@ -57,6 +60,7 @@ function App() {
   const resetDraft = () => {
     setName('');
     setModule('');
+    setType('UXUI');
     setDescriptionText('');
     setImageBytes(null);
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
@@ -166,6 +170,7 @@ function App() {
         apiKey,
         name: name.trim(),
         module,
+        papercutType: type,
         descriptionText,
       })) as { error?: string };
       if (res?.error) throw new Error(res.error);
@@ -411,6 +416,29 @@ function App() {
                   {PAPERCUT_MODULES.map((mod) => (
                     <option key={mod} value={mod}>
                       {mod}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <div className="label">Type</div>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as PapercutType)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid hsl(var(--border))',
+                    backgroundColor: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))',
+                    fontSize: '14px',
+                  }}
+                >
+                  {PAPERCUT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
                     </option>
                   ))}
                 </select>

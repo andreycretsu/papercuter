@@ -34,6 +34,7 @@ type CreateOnlyRequest = {
   apiKey?: string;
   name: string;
   module?: string;
+  papercutType?: string;
   descriptionText?: string;
 };
 
@@ -329,6 +330,7 @@ export default defineBackground(() => {
             body: JSON.stringify({
               name: msg.name,
               module: msg.module || null,
+              type: msg.papercutType || 'UXUI',
               descriptionHtml: textToHtml(msg.descriptionText ?? ''),
               screenshotUrl: null,
             }),
