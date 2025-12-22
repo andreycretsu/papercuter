@@ -161,10 +161,9 @@ The app can create Jira issues from papercuts. This works with both standard Jir
 JIRA_DOMAIN=yourcompany.atlassian.net
 JIRA_EMAIL=papercuts-bot@yourcompany.com  # Service account email
 JIRA_API_TOKEN=your-api-token              # Service account token
-JIRA_PROJECT_KEY=PROJ                       # Your Jira project key
 ```
 
-4. Restart your application
+3. Restart your application
 
 **Note:** The service account creates all issues, but each issue description starts with "Reported by: [actual user's email]" to preserve creator identity.
 
@@ -173,7 +172,9 @@ JIRA_PROJECT_KEY=PROJ                       # Your Jira project key
 1. Open any papercut detail page
 2. Click the three-dots menu (⋮) in the top right
 3. Select "Create Jira Issue"
-4. A new Jira task will be created with:
+4. Choose a Jira project from the dropdown (projects are fetched dynamically)
+5. Click "Create Issue"
+6. A new Jira task will be created with:
    - Summary: papercut name
    - Description: papercut description with module and type metadata
    - Attachment: screenshot (if available)

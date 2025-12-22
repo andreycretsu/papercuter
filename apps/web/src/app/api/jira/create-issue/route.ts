@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 /**
  * Creates a Jira issue from a papercut.
@@ -26,21 +26,27 @@ export async function POST(request: NextRequest) {
     const jiraDomain = process.env.JIRA_DOMAIN;
     const jiraEmail = process.env.JIRA_EMAIL;
     const jiraApiToken = process.env.JIRA_API_TOKEN;
-    const jiraProjectKey = process.env.JIRA_PROJECT_KEY;
 
-    if (!jiraDomain || !jiraEmail || !jiraApiToken || !jiraProjectKey) {
+    if (!jiraDomain || !jiraEmail || !jiraApiToken) {
       return NextResponse.json(
-        { error: "Jira integration is not configured. Please set JIRA_DOMAIN, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_PROJECT_KEY environment variables." },
+        { error: "Jira integration is not configured. Please set JIRA_DOMAIN, JIRA_EMAIL, and JIRA_API_TOKEN environment variables." },
         { status: 503 }
       );
     }
 
     const body = await request.json();
-    const { name, description, screenshotUrl, module, type } = body;
+    const { name, description, screenshotUrl, module, type, projectKey } = body;
 
     if (!name) {
       return NextResponse.json(
         { error: "Name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!projectKey) {
+      return NextResponse.json(
+        { error: "Project key is required" },
         { status: 400 }
       );
     }
@@ -76,7 +82,7 @@ export async function POST(request: NextRequest) {
     const issuePayload = {
       fields: {
         project: {
-          key: jiraProjectKey
+          key: projectKey
         },
         summary: name,
         description: jiraDescription,

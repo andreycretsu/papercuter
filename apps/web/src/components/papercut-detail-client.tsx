@@ -14,6 +14,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { SwipeToResolve } from "@/components/swipe-to-resolve";
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
@@ -39,6 +55,10 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
   const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
   const [currentStatus, setCurrentStatus] = React.useState<PapercutStatus>(papercut.status);
   const [isCreatingJiraIssue, setIsCreatingJiraIssue] = React.useState(false);
+  const [showJiraDialog, setShowJiraDialog] = React.useState(false);
+  const [jiraProjects, setJiraProjects] = React.useState<Array<{key: string, name: string}>>([]);
+  const [selectedProject, setSelectedProject] = React.useState<string>("");
+  const [isLoadingProjects, setIsLoadingProjects] = React.useState(false);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -88,8 +108,33 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
     }
   };
 
+  const fetchJiraProjects = async () => {
+    setIsLoadingProjects(true);
+    try {
+      const res = await fetch('/api/jira/projects');
+      if (!res.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      const data = await res.json();
+      setJiraProjects(data.projects || []);
+      if (data.projects?.length > 0) {
+        setSelectedProject(data.projects[0].key);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to load Jira projects');
+      setShowJiraDialog(false);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
+
+  const handleOpenJiraDialog = () => {
+    setShowJiraDialog(true);
+    fetchJiraProjects();
+  };
+
   const handleCreateJiraIssue = async () => {
-    if (isCreatingJiraIssue) return;
+    if (isCreatingJiraIssue || !selectedProject) return;
 
     setIsCreatingJiraIssue(true);
     try {
@@ -107,7 +152,8 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           description,
           screenshotUrl: papercut.screenshotUrl,
           module: papercut.module,
-          type: papercut.type
+          type: papercut.type,
+          projectKey: selectedProject
         })
       });
 
@@ -124,6 +170,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           onClick: () => window.open(data.issueUrl, '_blank')
         }
       });
+      setShowJiraDialog(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create Jira issue');
     } finally {
@@ -205,12 +252,11 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={handleCreateJiraIssue}
-                    disabled={isCreatingJiraIssue}
+                    onClick={handleOpenJiraDialog}
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    {isCreatingJiraIssue ? "Creating..." : "Create Jira Issue"}
+                    Create Jira Issue
                   </DropdownMenuItem>
                   {currentStatus === 'resolved' && (
                     <DropdownMenuItem
@@ -269,6 +315,68 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
         </div>
       )}
+
+      <Dialog open={showJiraDialog} onOpenChange={setShowJiraDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Jira Issue</DialogTitle>
+            <DialogDescription>
+              Select a Jira project to create this papercut as an issue.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="project">Jira Project</Label>
+              {isLoadingProjects ? (
+                <div className="text-sm text-muted-foreground">Loading projects...</div>
+              ) : jiraProjects.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No projects found</div>
+              ) : (
+                <Select value={selectedProject} onValueChange={setSelectedProject}>
+                  <SelectTrigger id="project">
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jiraProjects.map((project) => (
+                      <SelectItem key={project.key} value={project.key}>
+                        {project.name} ({project.key})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><strong>Issue will include:</strong></p>
+              <ul className="list-disc list-inside ml-2">
+                <li>Summary: {papercut.name}</li>
+                <li>Reporter: {papercut.userEmail || 'Unknown'}</li>
+                {papercut.module && <li>Module: {papercut.module}</li>}
+                {papercut.type && <li>Type: {papercut.type}</li>}
+                {papercut.screenshotUrl && <li>Screenshot attachment</li>}
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowJiraDialog(false)}
+              disabled={isCreatingJiraIssue}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateJiraIssue}
+              disabled={isCreatingJiraIssue || !selectedProject || isLoadingProjects}
+            >
+              {isCreatingJiraIssue ? "Creating..." : "Create Issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

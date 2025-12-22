@@ -111,7 +111,6 @@ export function JiraSettingsCard() {
                 <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_DOMAIN</code> - Your Jira domain (e.g., yourcompany.atlassian.net)</li>
                 <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_EMAIL</code> - Service account email (e.g., papercuts-bot@yourcompany.com)</li>
                 <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_API_TOKEN</code> - The API token for the service account</li>
-                <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_PROJECT_KEY</code> - Your Jira project key (e.g., PROJ)</li>
               </ul>
             </li>
             <li>Restart your application</li>
@@ -121,6 +120,7 @@ export function JiraSettingsCard() {
         <div className="pt-2">
           <p className="text-xs text-muted-foreground">
             Once configured, you'll see a "Create Jira Issue" option in the papercut detail page.
+            You can select any project from your Jira workspace - no hardcoded project key needed.
             The integration works with both standard Jira projects and Jira Product Discovery.
             Each Jira issue will show "Reported by: [user's email]" to preserve the actual creator's identity.
           </p>
