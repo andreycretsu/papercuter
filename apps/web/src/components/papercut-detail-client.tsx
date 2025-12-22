@@ -5,8 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SwipeToResolve } from "@/components/swipe-to-resolve";
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
 type PapercutStatus = 'open' | 'resolved';
@@ -119,23 +127,6 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!showConfirm && (
-              <>
-                <Link href={`/papercuts/${papercut.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResolve}
-                  disabled={isUpdatingStatus}
-                >
-                  {isUpdatingStatus ? "Updating..." : currentStatus === 'open' ? "Resolve" : "Reopen"}
-                </Button>
-              </>
-            )}
             {showConfirm ? (
               <>
                 <Button
@@ -156,16 +147,41 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowConfirm(true)}
-              >
-                Delete
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/papercuts/${papercut.id}/edit`} className="flex items-center gap-2 cursor-pointer">
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setShowConfirm(true)}
+                    className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
+
+        {currentStatus === 'open' && (
+          <div className="max-w-md">
+            <SwipeToResolve
+              onResolve={handleResolve}
+              isResolving={isUpdatingStatus}
+              isResolved={false}
+            />
+          </div>
+        )}
 
         {papercut.descriptionHtml && (
           <div className="prose prose-neutral max-w-none">
