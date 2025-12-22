@@ -183,16 +183,6 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
         </div>
 
-        {currentStatus === 'open' && (
-          <div className="max-w-md">
-            <SwipeToResolve
-              onResolve={handleResolve}
-              isResolving={isUpdatingStatus}
-              isResolved={false}
-            />
-          </div>
-        )}
-
         {papercut.descriptionHtml && (
           <div className="prose prose-neutral max-w-none">
             <style jsx>{`
@@ -213,6 +203,18 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
         )}
       </div>
+
+      {currentStatus === 'open' && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+          <div className="shadow-lg">
+            <SwipeToResolve
+              onResolve={handleResolve}
+              isResolving={isUpdatingStatus}
+              isResolved={false}
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
