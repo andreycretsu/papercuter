@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { DescriptionEditor } from "@/components/description-editor";
-import { PAPERCUT_MODULES, type PapercutModule } from "@/server/papercuts-supabase-store";
+import { PAPERCUT_MODULES, PAPERCUT_TYPES, type PapercutModule, type PapercutType } from "@/server/papercuts-supabase-store";
 
 export function PapercutFocusDialog(props: {
   open: boolean;
@@ -39,6 +39,7 @@ export function PapercutFocusDialog(props: {
   );
   const [module, setModule] = React.useState<PapercutModule | "">("");
   const [moduleError, setModuleError] = React.useState<string | null>(null);
+  const [type, setType] = React.useState<PapercutType>("UXUI");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -81,6 +82,7 @@ export function PapercutFocusDialog(props: {
           descriptionHtml,
           screenshotUrl,
           module: module || null,
+          type,
         }),
       });
       const data = (await res.json()) as { item?: any; error?: string };
@@ -92,6 +94,7 @@ export function PapercutFocusDialog(props: {
       setDescriptionHtml("");
       setScreenshotUrl(null);
       setModule("");
+      setType("UXUI");
     } catch {
       toast.error("Couldn’t create papercut");
     } finally {
@@ -184,6 +187,22 @@ export function PapercutFocusDialog(props: {
                 {moduleError && (
                   <p className="text-sm text-destructive">{moduleError}</p>
                 )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="papercut-type">Type</Label>
+                <select
+                  id="papercut-type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as PapercutType)}
+                  className="flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                >
+                  {PAPERCUT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid gap-2">

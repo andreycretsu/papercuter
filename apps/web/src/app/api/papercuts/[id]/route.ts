@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/server/supabase-admin";
 import { requirePapercutsApiKey } from "@/server/api-key";
-import { updatePapercutStatus, PAPERCUT_STATUSES, PAPERCUT_MODULES } from "@/server/papercuts-supabase-store";
-import type { PapercutStatus, PapercutModule } from "@/server/papercuts-supabase-store";
+import { updatePapercutStatus, PAPERCUT_STATUSES, PAPERCUT_MODULES, PAPERCUT_TYPES } from "@/server/papercuts-supabase-store";
+import type { PapercutStatus, PapercutModule, PapercutType } from "@/server/papercuts-supabase-store";
 
 export async function DELETE(
   req: NextRequest,
@@ -77,6 +77,7 @@ export async function PUT(
     name?: unknown;
     descriptionHtml?: unknown;
     module?: unknown;
+    type?: unknown;
   };
 
   if (!body || typeof body.name !== "string" || !body.name.trim()) {
@@ -89,6 +90,7 @@ export async function PUT(
   const name = body.name.trim();
   const descriptionHtml = typeof body.descriptionHtml === "string" ? body.descriptionHtml : "";
   const module = typeof body.module === "string" && body.module.trim() ? body.module : null;
+  const type = typeof body.type === "string" && body.type.trim() ? body.type : null;
 
   if (module && !PAPERCUT_MODULES.includes(module as PapercutModule)) {
     return NextResponse.json(
@@ -97,15 +99,28 @@ export async function PUT(
     );
   }
 
+  if (type && !PAPERCUT_TYPES.includes(type as PapercutType)) {
+    return NextResponse.json(
+      { error: "Invalid type" },
+      { status: 400 }
+    );
+  }
+
   try {
     const supabase = getSupabaseAdmin();
+    const updateData: any = {
+      name,
+      description_html: descriptionHtml,
+      module,
+    };
+
+    if (type) {
+      updateData.type = type;
+    }
+
     const { error } = await supabase
       .from("papercuts")
-      .update({
-        name,
-        description_html: descriptionHtml,
-        module,
-      })
+      .update(updateData)
       .eq("id", id);
 
     if (error) throw error;

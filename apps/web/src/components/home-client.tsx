@@ -6,7 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import type { Papercut, PapercutStatus } from "@/server/papercuts-supabase-store";
-import { PAPERCUT_MODULES, PAPERCUT_STATUSES } from "@/server/papercuts-supabase-store";
+import { PAPERCUT_MODULES, PAPERCUT_STATUSES, PAPERCUT_TYPES } from "@/server/papercuts-supabase-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -397,6 +397,13 @@ export function HomeClient(props: {
                             <div className="truncate text-[18px] font-semibold">
                               {p.name}
                             </div>
+                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset flex-shrink-0 ${
+                              p.type === 'UXUI'
+                                ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                                : 'bg-indigo-50 text-indigo-700 ring-indigo-700/10'
+                            }`}>
+                              {p.type}
+                            </span>
                             {p.module && (
                               <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 flex-shrink-0">
                                 {p.module}

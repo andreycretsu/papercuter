@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 
 type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
 type PapercutStatus = 'open' | 'resolved';
+type PapercutType = 'UXUI' | 'Feature Idea';
 
 type Papercut = {
   id: string;
@@ -20,6 +21,7 @@ type Papercut = {
   userEmail?: string | null;
   module?: PapercutModule | null;
   status: PapercutStatus;
+  type: PapercutType;
 };
 
 export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
@@ -86,6 +88,13 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
               <h1 className="text-3xl font-bold text-foreground">
                 {papercut.name}
               </h1>
+              <span className={`inline-flex items-center rounded-md px-2.5 py-1.5 text-sm font-medium ring-1 ring-inset ${
+                papercut.type === 'UXUI'
+                  ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                  : 'bg-indigo-50 text-indigo-700 ring-indigo-700/10'
+              }`}>
+                {papercut.type}
+              </span>
               {papercut.module && (
                 <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   {papercut.module}

@@ -2,9 +2,11 @@ import { getSupabaseAdmin } from "@/server/supabase-admin";
 
 export type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk';
 export type PapercutStatus = 'open' | 'resolved';
+export type PapercutType = 'UXUI' | 'Feature Idea';
 
 export const PAPERCUT_MODULES: PapercutModule[] = ['CoreHR', 'Recruit', 'Perform', 'Pulse', 'Time', 'Desk'];
 export const PAPERCUT_STATUSES: PapercutStatus[] = ['open', 'resolved'];
+export const PAPERCUT_TYPES: PapercutType[] = ['UXUI', 'Feature Idea'];
 
 export type Papercut = {
   id: string;
@@ -15,6 +17,7 @@ export type Papercut = {
   userEmail?: string | null;
   module?: PapercutModule | null;
   status: PapercutStatus;
+  type: PapercutType;
 };
 
 type DbRow = {
@@ -26,13 +29,14 @@ type DbRow = {
   user_email: string | null;
   module: string | null;
   status: string;
+  type: string;
 };
 
 export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Promise<Papercut[]> {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("papercuts")
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status,type")
     .order("created_at", { ascending: false });
 
   if (statusFilter) {
@@ -52,6 +56,7 @@ export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Prom
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
     status: (r.status || 'open') as PapercutStatus,
+    type: (r.type || 'UXUI') as PapercutType,
   }));
 }
 
@@ -59,7 +64,7 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
   const supabase = getSupabaseAdmin();
   const { data, error} = await supabase
     .from("papercuts")
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status,type")
     .eq("id", id)
     .single();
 
@@ -74,6 +79,7 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
     status: (r.status || 'open') as PapercutStatus,
+    type: (r.type || 'UXUI') as PapercutType,
   };
 }
 
@@ -83,6 +89,7 @@ export async function createPapercutSupabase(input: {
   screenshotUrl?: string | null;
   userEmail?: string | null;
   module?: PapercutModule | null;
+  type?: PapercutType;
 }): Promise<Papercut> {
   const supabase = getSupabaseAdmin();
   const name = input.name.trim() || "Untitled";
@@ -92,6 +99,7 @@ export async function createPapercutSupabase(input: {
     screenshot_url: input.screenshotUrl ?? null,
     user_email: input.userEmail ?? null,
     module: input.module ?? null,
+    type: input.type ?? 'UXUI',
   };
 
   console.log("[createPapercutSupabase] Inserting into database:", insert);
@@ -99,7 +107,7 @@ export async function createPapercutSupabase(input: {
   const { data, error } = await supabase
     .from("papercuts")
     .insert(insert)
-    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status")
+    .select("id,name,description_html,screenshot_url,created_at,user_email,module,status,type")
     .single();
 
   if (error) {
@@ -116,6 +124,7 @@ export async function createPapercutSupabase(input: {
     userEmail: r.user_email,
     module: r.module as PapercutModule | null,
     status: (r.status || 'open') as PapercutStatus,
+    type: (r.type || 'UXUI') as PapercutType,
   };
 }
 

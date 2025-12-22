@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   createPapercutSupabase,
   listPapercutsSupabase,
+  PAPERCUT_TYPES,
 } from "@/server/papercuts-supabase-store";
 import { requirePapercutsApiKey } from "@/server/api-key";
 import { getServerSession } from "next-auth/next";
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
     descriptionHtml?: unknown;
     screenshotUrl?: unknown;
     module?: unknown;
+    type?: unknown;
   };
 
   if (!body || typeof body.name !== "string") {
@@ -46,6 +48,10 @@ export async function POST(req: Request) {
     typeof body.screenshotUrl === "string" ? body.screenshotUrl : null;
   const module =
     typeof body.module === "string" && body.module.trim() ? body.module : null;
+  const type =
+    typeof body.type === "string" && PAPERCUT_TYPES.includes(body.type as any)
+      ? body.type
+      : 'UXUI';
 
   // Get the user's session to track who created the papercut
   const session = await getServerSession(authOptions);
@@ -58,6 +64,7 @@ export async function POST(req: Request) {
       screenshotUrl,
       userEmail,
       module: module as any,
+      type: type as any,
     });
 
     return NextResponse.json({ item: created }, { status: 201 });
