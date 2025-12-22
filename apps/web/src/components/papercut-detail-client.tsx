@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -160,6 +160,16 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                       Edit
                     </Link>
                   </DropdownMenuItem>
+                  {currentStatus === 'resolved' && (
+                    <DropdownMenuItem
+                      onClick={handleResolve}
+                      disabled={isUpdatingStatus}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      {isUpdatingStatus ? "Reopening..." : "Reopen"}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => setShowConfirm(true)}
                     className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
