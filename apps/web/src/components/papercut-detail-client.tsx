@@ -183,6 +183,8 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </div>
         </div>
 
+        <div className="border-t border-border my-6"></div>
+
         {papercut.descriptionHtml && (
           <div className="prose prose-neutral max-w-none">
             <style jsx>{`
