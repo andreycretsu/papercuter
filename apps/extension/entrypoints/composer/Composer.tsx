@@ -224,8 +224,18 @@ export default function Composer() {
 
       console.log('[Papercuts] Papercut created successfully');
       setDone(true);
-      // TEMPORARILY: Don't close tab so we can see console logs
-      // setTimeout(() => window.close(), 350);
+
+      // Close the composer tab and return to the source tab
+      if (sourceTabId) {
+        try {
+          const tabId = parseInt(sourceTabId, 10);
+          await browser.tabs.update(tabId, { active: true });
+        } catch (e) {
+          console.log('[Papercuts] Could not focus source tab:', e);
+        }
+      }
+
+      setTimeout(() => window.close(), 350);
     } catch (err) {
       console.error('[Papercuts] Error creating papercut:', err);
       setError('Create failed. Check your connection and try again.');
