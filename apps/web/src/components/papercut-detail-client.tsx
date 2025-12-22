@@ -88,7 +88,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
   };
 
   return (
-    <Card className="border border-border p-8">
+    <Card className="border border-border p-8 mb-32">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -208,7 +208,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
 
       {currentStatus === 'open' && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
-          <div className="shadow-lg">
+          <div className="bg-white rounded-xl border border-border shadow-lg p-4">
             <SwipeToResolve
               onResolve={handleResolve}
               isResolving={isUpdatingStatus}
