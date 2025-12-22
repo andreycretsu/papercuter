@@ -14,6 +14,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+
+
+
+## [1.1.7] - 2025-12-22
+
+### Changed
+- Auto-deployment build
+
+
+## [1.1.6] - 2025-12-22
+
+### Changed
+- Auto-deployment build
+
+
+## [1.1.5] - 2025-12-22
+
+### Changed
+- Auto-deployment build
+
+
+## [1.1.4] - 2025-12-22
+
+### Changed
+- Auto-deployment build
+
+
 ## [1.1.3] - 2025-12-22
 
 ### Changed

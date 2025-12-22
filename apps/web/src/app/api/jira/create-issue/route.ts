@@ -46,14 +46,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Jira issue description
-    let jiraDescription = description || "";
+    let jiraDescription = "";
 
-    // Add metadata to description
+    // Add creator information at the top
+    const creatorEmail = session.user.email || 'Unknown user';
+    jiraDescription = `*Reported by:* ${creatorEmail}\n\n`;
+
+    // Add metadata
     if (module) {
-      jiraDescription = `*Module:* ${module}\n\n${jiraDescription}`;
+      jiraDescription += `*Module:* ${module}\n`;
     }
     if (type) {
-      jiraDescription = `*Type:* ${type}\n\n${jiraDescription}`;
+      jiraDescription += `*Type:* ${type}\n`;
+    }
+
+    // Add description
+    if (description) {
+      jiraDescription += `\n${description}`;
     }
 
     // Add screenshot link if available

@@ -104,13 +104,13 @@ export function JiraSettingsCard() {
         <div className="space-y-2">
           <h3 className="text-sm font-semibold">Setup Instructions:</h3>
           <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Atlassian API Tokens</a></li>
-            <li>Create a new API token</li>
+            <li>Create or use a Jira service account (e.g., papercuts-bot@yourcompany.com) with permission to create issues</li>
+            <li>Generate an API token for that account at <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Atlassian API Tokens</a></li>
             <li>Add the following environment variables to your deployment:
               <ul className="list-disc list-inside ml-4 mt-1">
                 <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_DOMAIN</code> - Your Jira domain (e.g., yourcompany.atlassian.net)</li>
-                <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_EMAIL</code> - Your Jira account email</li>
-                <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_API_TOKEN</code> - The API token you created</li>
+                <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_EMAIL</code> - Service account email (e.g., papercuts-bot@yourcompany.com)</li>
+                <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_API_TOKEN</code> - The API token for the service account</li>
                 <li><code className="text-xs bg-gray-100 px-1 py-0.5 rounded">JIRA_PROJECT_KEY</code> - Your Jira project key (e.g., PROJ)</li>
               </ul>
             </li>
@@ -122,6 +122,7 @@ export function JiraSettingsCard() {
           <p className="text-xs text-muted-foreground">
             Once configured, you'll see a "Create Jira Issue" option in the papercut detail page.
             The integration works with both standard Jira projects and Jira Product Discovery.
+            Each Jira issue will show "Reported by: [user's email]" to preserve the actual creator's identity.
           </p>
         </div>
       </div>

@@ -153,17 +153,20 @@ The app can create Jira issues from papercuts. This works with both standard Jir
 
 ### Setup
 
-1. Generate a Jira API token at [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-2. Add these environment variables to your deployment:
+1. Create or use a Jira service account (e.g., `papercuts-bot@yourcompany.com`) with permission to create issues in your project
+2. Generate a Jira API token for that account at [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+3. Add these environment variables to your deployment:
 
 ```bash
 JIRA_DOMAIN=yourcompany.atlassian.net
-JIRA_EMAIL=your-email@example.com
-JIRA_API_TOKEN=your-api-token
-JIRA_PROJECT_KEY=PROJ
+JIRA_EMAIL=papercuts-bot@yourcompany.com  # Service account email
+JIRA_API_TOKEN=your-api-token              # Service account token
+JIRA_PROJECT_KEY=PROJ                       # Your Jira project key
 ```
 
-3. Restart your application
+4. Restart your application
+
+**Note:** The service account creates all issues, but each issue description starts with "Reported by: [actual user's email]" to preserve creator identity.
 
 ### Usage
 
@@ -182,8 +185,10 @@ JIRA_PROJECT_KEY=PROJ
 - **Authentication**: Basic Auth using email + API token
 - **Field Mapping**:
   - Papercut name → Jira summary
-  - Papercut description → Jira description (with module/type prepended)
+  - Creator email → "Reported by" in description (preserves user identity)
+  - Papercut description → Jira description (with module/type metadata)
   - Screenshot URL → Jira attachment (downloaded and uploaded)
 - **Issue Type**: Creates as "Task" by default (customizable in code)
+- **Creator Tracking**: Each issue shows the actual papercut creator's email, even though a service account creates the issue
 
 
