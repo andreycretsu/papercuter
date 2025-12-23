@@ -8,6 +8,8 @@ import type { Papercut } from "@/server/papercuts-supabase-store";
 import { PAPERCUT_MODULES } from "@/server/papercuts-supabase-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Kbd } from "@/components/ui/kbd";
+import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
 
 type TopPerformer = {
   email: string;
@@ -19,7 +21,9 @@ export function DashboardClient(props: {
   initialPapercuts: Papercut[];
   initialError?: string | null;
 }) {
+  const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<Papercut[]>(props.initialPapercuts);
+  const [prefillScreenshotUrl, setPrefillScreenshotUrl] = React.useState<string | null>(null);
 
   // Calculate top performers
   const topPerformers = React.useMemo(() => {
@@ -60,6 +64,19 @@ export function DashboardClient(props: {
       .sort((a, b) => b.count - a.count);
   }, [items]);
 
+  // Refresh function
+  const refresh = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/papercuts");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setItems(data);
+    } catch (error) {
+      console.error("Failed to refresh papercuts:", error);
+      toast.error("Failed to refresh papercuts");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header */}
@@ -96,6 +113,10 @@ export function DashboardClient(props: {
                   </svg>
                 </Button>
               </Link>
+              <Button onClick={() => setOpen(true)} className="h-10 gap-2">
+                New papercut
+                <Kbd>N</Kbd>
+              </Button>
             </div>
           </div>
         </div>
@@ -219,6 +240,16 @@ export function DashboardClient(props: {
           )}
         </div>
       </div>
+
+      <PapercutFocusDialog
+        open={open}
+        onOpenChange={setOpen}
+        onCreate={refresh}
+        prefillScreenshotUrl={prefillScreenshotUrl}
+        onCreated={() => {
+          setPrefillScreenshotUrl(null);
+        }}
+      />
     </div>
   );
 }

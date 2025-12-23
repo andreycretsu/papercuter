@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Kbd } from "@/components/ui/kbd";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
 import { LikeButton } from "@/components/like-button";
 import { Snowfall } from "@/components/snowfall";
@@ -245,8 +246,9 @@ export function HomeClient(props: {
                   </svg>
                 </Button>
               </Link>
-              <Button onClick={() => setOpen(true)} className="h-10">
+              <Button onClick={() => setOpen(true)} className="h-10 gap-2">
                 New papercut
+                <Kbd>N</Kbd>
               </Button>
             </div>
           </div>
