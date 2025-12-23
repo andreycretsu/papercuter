@@ -96,7 +96,7 @@ async function openPopupTab() {
   }
 }
 
-async function captureVisibleUploadAndOpenComposer(opts: {
+async function captureVisibleAndOpenComposer(opts: {
   tab: { id: number; windowId?: number };
   baseUrl?: string;
   apiKey?: string;
@@ -110,23 +110,24 @@ async function captureVisibleUploadAndOpenComposer(opts: {
     return;
   }
 
-  console.log('[Papercuts BG] Falling back to full visible capture...');
+  console.log('[Papercuts BG] Capturing visible tab...');
   const dataUrl = await browser.tabs.captureVisibleTab(opts.tab.windowId, { format: 'png' });
   const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
 
-  const uploaded = await uploadImageToApp({ baseUrl, apiKey, imageBytes });
-  if ('error' in uploaded) {
-    console.error('[Papercuts BG] Upload failed during shortcut fallback:', uploaded.error);
-    await openPopupTab();
-    return;
-  }
+  // Store screenshot bytes instead of uploading immediately
+  const uint8Array = new Uint8Array(imageBytes);
+  await browser.storage.local.set({
+    papercuts_connect: `papercuts:${baseUrl}#${apiKey}`,
+    pending_screenshot_bytes: Array.from(uint8Array)
+  });
 
-  const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: opts.tab.id });
+  // Open composer tab
+  const url = buildComposerUrl({ sourceTabId: opts.tab.id });
   try {
-    await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-  } catch (windowErr) {
-    console.warn('[Papercuts BG] Failed to create composer window in fallback, opening tab:', windowErr);
     await browser.tabs.create({ url, active: true });
+  } catch (err) {
+    console.error('[Papercuts BG] Failed to open composer:', err);
+    await openPopupTab();
   }
 }
 
@@ -267,33 +268,28 @@ export default defineBackground(() => {
               format: 'png',
             });
             const imageBytes = await (await fetch(dataUrl)).arrayBuffer();
-            const uploaded = await uploadImageToApp({
-              baseUrl: msg.baseUrl,
-              apiKey: msg.apiKey,
-              imageBytes,
-            });
-            if ('error' in uploaded) {
-              sendResponse(uploaded);
-              return;
-            }
 
-            console.log('[Papercuts BG] Upload successful, opening Composer...');
-            const url = buildComposerUrl({ screenshotUrl: uploaded.url, sourceTabId: sender.tab?.id });
+            // Store screenshot bytes instead of uploading immediately
+            const uint8Array = new Uint8Array(imageBytes);
+            await browser.storage.local.set({
+              papercuts_connect: `papercuts:${msg.baseUrl}#${msg.apiKey}`,
+              pending_screenshot_bytes: Array.from(uint8Array)
+            });
+
+            console.log('[Papercuts BG] Screenshot stored, opening Composer...');
+            const url = buildComposerUrl({ sourceTabId: sender.tab?.id });
 
             try {
-              const win = await browser.windows.create({ url, type: 'popup', width: 420, height: 720 });
-              console.log('[Papercuts BG] Composer window opened:', win);
-              sendResponse({ ok: true });
-            } catch (windowErr) {
-              console.error('[Papercuts BG] Failed to create window:', windowErr);
-              console.log('[Papercuts BG] Falling back to tab...');
               await browser.tabs.create({ url, active: true });
               console.log('[Papercuts BG] Composer tab opened');
               sendResponse({ ok: true });
+            } catch (err) {
+              console.error('[Papercuts BG] Failed to open composer:', err);
+              sendResponse({ error: 'Failed to open composer: ' + String(err) });
             }
           } catch (err) {
-            console.error('[Papercuts BG] Capture/upload failed:', err);
-            sendResponse({ error: 'Capture/upload failed: ' + String(err) });
+            console.error('[Papercuts BG] Capture failed:', err);
+            sendResponse({ error: 'Capture failed: ' + String(err) });
           }
           return;
         }
@@ -464,7 +460,7 @@ export default defineBackground(() => {
       const msg = String((err as any)?.message ?? err ?? '');
       console.warn('[Papercuts BG] Shortcut overlay failed, using fallback:', msg);
       try {
-        await captureVisibleUploadAndOpenComposer({
+        await captureVisibleAndOpenComposer({
           tab: { id: tab.id, windowId: tab.windowId },
           baseUrl,
           apiKey,
