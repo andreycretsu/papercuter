@@ -441,16 +441,14 @@ export function HomeClient(props: {
                         ) : null}
                       </div>
                     </Link>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <LikeButton
-                          papercutId={p.id}
-                          initialLikeCount={p.likeCount || 0}
-                          initialUserLikeCount={p.userLikeCount || 0}
-                        />
-                      </div>
-                    </div>
                   </Card>
+                  <div onClick={(e) => e.stopPropagation()} className="mt-5 flex-shrink-0">
+                    <LikeButton
+                      papercutId={p.id}
+                      initialLikeCount={p.likeCount || 0}
+                      initialUserLikeCount={p.userLikeCount || 0}
+                    />
+                  </div>
                 </div>
                   ))}
                 </div>

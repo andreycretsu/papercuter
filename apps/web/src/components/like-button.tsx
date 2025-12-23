@@ -20,60 +20,42 @@ export function LikeButton({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [userLikeCount, setUserLikeCount] = useState(initialUserLikeCount);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleLike = async () => {
-    if (isLoading) return;
-
-    const previousLikeCount = likeCount;
-    const previousUserCount = userLikeCount;
-
-    // Optimistic update
-    setLikeCount(likeCount + 1);
-    setUserLikeCount(userLikeCount + 1);
+    // Optimistic update - increment immediately
+    setLikeCount(prev => prev + 1);
+    setUserLikeCount(prev => prev + 1);
     setIsAnimating(true);
 
-    setTimeout(() => setIsAnimating(false), 600);
+    setTimeout(() => setIsAnimating(false), 300);
 
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`/api/papercuts/${papercutId}/like`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Like API error:', {
-          status: response.status,
-          statusText: response.statusText,
-          ...errorData
-        });
-        throw new Error(`Failed to update like: ${errorData.details || errorData.error || response.statusText}`);
+    // Fire and forget - don't wait for the response
+    fetch(`/api/papercuts/${papercutId}/like`, {
+      method: 'POST',
+    }).then(response => {
+      if (response.ok) {
+        return response.json();
       }
-
-      const data = await response.json();
+      throw new Error('Failed to like');
+    }).then(data => {
+      // Sync with server response
       setLikeCount(data.likeCount);
       setUserLikeCount(data.userLikeCount);
       onLikeChange?.(data.likeCount, data.userLikeCount);
-    } catch (error) {
+    }).catch(error => {
       console.error('Error updating like:', error);
-      // Revert on error
-      setLikeCount(previousLikeCount);
-      setUserLikeCount(previousUserCount);
-    } finally {
-      setIsLoading(false);
-    }
+      // Decrement on error
+      setLikeCount(prev => prev - 1);
+      setUserLikeCount(prev => prev - 1);
+    });
   };
 
   return (
     <button
       onClick={handleLike}
-      disabled={isLoading}
       className={cn(
         'group flex items-center gap-2 transition-all duration-200',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        '-ml-2'
+        'hover:scale-110'
       )}
       aria-label="Like"
     >
