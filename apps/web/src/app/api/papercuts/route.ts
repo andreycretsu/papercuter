@@ -16,7 +16,7 @@ export async function GET() {
   }
 
   try {
-    const items = await listPapercutsSupabase();
+    const items = await listPapercutsSupabase(undefined, session.user.email);
     return NextResponse.json({ items });
   } catch (error) {
     return NextResponse.json(

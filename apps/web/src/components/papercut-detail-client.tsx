@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { MoreVertical, Pencil, Trash2, RotateCcw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LikeButton } from "@/components/like-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,8 @@ type Papercut = {
   module?: PapercutModule | null;
   status: PapercutStatus;
   type: PapercutType;
+  likeCount?: number;
+  isLikedByCurrentUser?: boolean;
 };
 
 export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
@@ -215,6 +218,13 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
                   <span className="font-medium">{papercut.userEmail}</span>
                 </div>
               )}
+            </div>
+            <div className="mt-3">
+              <LikeButton
+                papercutId={papercut.id}
+                initialLikeCount={papercut.likeCount || 0}
+                initialIsLiked={papercut.isLikedByCurrentUser || false}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">

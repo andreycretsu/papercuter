@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
+import { LikeButton } from "@/components/like-button";
 import { X } from "lucide-react";
 import {
   AlertDialog,
@@ -389,8 +390,8 @@ export function HomeClient(props: {
                     }}
                     className="mt-5 h-4 w-4 rounded border-border flex-shrink-0"
                   />
-                  <Link href={`/papercuts/${p.id}`} className="flex-1">
-                    <Card className="border border-border p-4 hover:bg-accent transition-colors cursor-pointer">
+                  <Card className="border border-border p-4 hover:bg-accent transition-colors flex-1">
+                    <Link href={`/papercuts/${p.id}`} className="block">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
@@ -439,8 +440,17 @@ export function HomeClient(props: {
                           </div>
                         ) : null}
                       </div>
-                    </Card>
-                  </Link>
+                    </Link>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <LikeButton
+                          papercutId={p.id}
+                          initialLikeCount={p.likeCount || 0}
+                          initialIsLiked={p.isLikedByCurrentUser || false}
+                        />
+                      </div>
+                    </div>
+                  </Card>
                 </div>
                   ))}
                 </div>

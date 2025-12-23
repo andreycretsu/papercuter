@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getPapercutById } from "@/server/papercuts-supabase-store";
 import { PapercutDetailClient } from "@/components/papercut-detail-client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +14,12 @@ export default async function PapercutPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email || undefined;
 
   let papercut;
   try {
-    papercut = await getPapercutById(id);
+    papercut = await getPapercutById(id, userEmail);
   } catch {
     notFound();
   }

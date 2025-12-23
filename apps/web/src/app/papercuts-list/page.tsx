@@ -9,15 +9,17 @@ export const dynamic = "force-dynamic";
 export default async function PapercutsPage() {
   let papercuts: Papercut[] = [];
   let setupError: string | null = null;
+
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role || 'editor';
+  const userEmail = session?.user?.email || undefined;
+
   try {
-    papercuts = await listPapercutsSupabase();
+    papercuts = await listPapercutsSupabase(undefined, userEmail);
   } catch {
     setupError =
       "Backend is not configured yet. Add Supabase + Cloudinary keys in apps/web/.env.local, then restart.";
   }
-
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role || 'editor';
 
   return (
     <HomeClient

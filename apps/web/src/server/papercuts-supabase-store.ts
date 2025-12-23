@@ -18,6 +18,8 @@ export type Papercut = {
   module?: PapercutModule | null;
   status: PapercutStatus;
   type: PapercutType;
+  likeCount?: number;
+  isLikedByCurrentUser?: boolean;
 };
 
 type DbRow = {
@@ -32,7 +34,7 @@ type DbRow = {
   type: string;
 };
 
-export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Promise<Papercut[]> {
+export async function listPapercutsSupabase(statusFilter?: PapercutStatus, currentUserEmail?: string): Promise<Papercut[]> {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("papercuts")
@@ -47,6 +49,49 @@ export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Prom
 
   if (error) throw error;
   const rows = (data ?? []) as DbRow[];
+
+  // Get like counts and user's likes
+  const papercutIds = rows.map(r => r.id);
+  let likeCounts: Record<string, number> = {};
+  let userLikes: Set<string> = new Set();
+
+  if (papercutIds.length > 0) {
+    // Get like counts for all papercuts
+    const { data: likesData } = await supabase
+      .from('papercut_likes')
+      .select('papercut_id')
+      .in('papercut_id', papercutIds);
+
+    if (likesData) {
+      likesData.forEach((like: any) => {
+        likeCounts[like.papercut_id] = (likeCounts[like.papercut_id] || 0) + 1;
+      });
+    }
+
+    // Get current user's likes if email provided
+    if (currentUserEmail) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', currentUserEmail)
+        .single();
+
+      if (userData) {
+        const { data: userLikesData } = await supabase
+          .from('papercut_likes')
+          .select('papercut_id')
+          .eq('user_id', userData.id)
+          .in('papercut_id', papercutIds);
+
+        if (userLikesData) {
+          userLikesData.forEach((like: any) => {
+            userLikes.add(like.papercut_id);
+          });
+        }
+      }
+    }
+  }
+
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
@@ -57,10 +102,12 @@ export async function listPapercutsSupabase(statusFilter?: PapercutStatus): Prom
     module: r.module as PapercutModule | null,
     status: (r.status || 'open') as PapercutStatus,
     type: (r.type || 'UXUI') as PapercutType,
+    likeCount: likeCounts[r.id] || 0,
+    isLikedByCurrentUser: userLikes.has(r.id),
   }));
 }
 
-export async function getPapercutById(id: string): Promise<Papercut | null> {
+export async function getPapercutById(id: string, currentUserEmail?: string): Promise<Papercut | null> {
   const supabase = getSupabaseAdmin();
   const { data, error} = await supabase
     .from("papercuts")
@@ -70,6 +117,34 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
 
   if (error || !data) return null;
   const r = data as DbRow;
+
+  // Get like count
+  const { count: likeCount } = await supabase
+    .from('papercut_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('papercut_id', id);
+
+  // Check if current user liked this papercut
+  let isLikedByCurrentUser = false;
+  if (currentUserEmail) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', currentUserEmail)
+      .single();
+
+    if (userData) {
+      const { data: userLike } = await supabase
+        .from('papercut_likes')
+        .select('id')
+        .eq('papercut_id', id)
+        .eq('user_id', userData.id)
+        .single();
+
+      isLikedByCurrentUser = !!userLike;
+    }
+  }
+
   return {
     id: r.id,
     name: r.name,
@@ -80,6 +155,8 @@ export async function getPapercutById(id: string): Promise<Papercut | null> {
     module: r.module as PapercutModule | null,
     status: (r.status || 'open') as PapercutStatus,
     type: (r.type || 'UXUI') as PapercutType,
+    likeCount: likeCount || 0,
+    isLikedByCurrentUser,
   };
 }
 
