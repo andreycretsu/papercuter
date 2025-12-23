@@ -122,6 +122,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  input,
+  select {
+    @apply bg-white;
+  }
 }
 
 /* TipTap editor styling */
