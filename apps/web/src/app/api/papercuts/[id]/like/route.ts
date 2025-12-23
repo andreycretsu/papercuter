@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { getSupabaseAdmin } from '@/server/supabase-admin';
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +14,7 @@ export async function POST(
     }
 
     const { id: papercutId } = await context.params;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseAdmin();
 
     // Get user ID from email
     const { data: userData, error: userError } = await supabase
@@ -87,7 +84,7 @@ export async function DELETE(
     }
 
     const { id: papercutId } = await context.params;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseAdmin();
 
     // Get user ID from email
     const { data: userData, error: userError } = await supabase
