@@ -124,7 +124,7 @@
   }
   input,
   select {
-    @apply bg-white !important;
+    background-color: white !important;
   }
 }
 
