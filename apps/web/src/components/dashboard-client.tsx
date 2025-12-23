@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Kbd } from "@/components/ui/kbd";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
+import { Snowfall } from "@/components/snowfall";
 
 type TopPerformer = {
   email: string;
@@ -79,6 +80,7 @@ export function DashboardClient(props: {
 
   return (
     <div className="min-h-screen bg-background">
+      <Snowfall />
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border w-full">
         <div className="mx-auto w-full px-6 py-4">
