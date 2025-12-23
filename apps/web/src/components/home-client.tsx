@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
 import { LikeButton } from "@/components/like-button";
+import { Snowfall } from "@/components/snowfall";
 import { X } from "lucide-react";
 import {
   AlertDialog,
@@ -208,6 +209,7 @@ export function HomeClient(props: {
 
   return (
     <div className="min-h-screen bg-background">
+      <Snowfall />
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border">
         <div className="mx-auto w-full max-w-6xl px-6 py-4">
