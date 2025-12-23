@@ -54,15 +54,23 @@ export function LikeButton({
     <button
       onClick={handleLike}
       className={cn(
-        'group flex items-center gap-2 transition-all duration-200',
+        'group flex flex-col items-center gap-1 transition-all duration-200',
         'hover:scale-110'
       )}
       aria-label="Like"
     >
+      <span
+        className={cn(
+          'text-lg font-semibold tabular-nums transition-colors duration-200',
+          userLikeCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
+        )}
+      >
+        {likeCount}
+      </span>
       <div className="relative">
         <Heart
           className={cn(
-            'w-5 h-5 transition-all duration-200',
+            'w-6 h-6 transition-all duration-200',
             userLikeCount > 0
               ? 'fill-red-500 text-red-500'
               : 'text-gray-400 group-hover:text-red-400 group-hover:fill-red-100'
@@ -71,24 +79,16 @@ export function LikeButton({
         {isAnimating && (
           <>
             <Heart
-              className="absolute inset-0 w-5 h-5 fill-red-500 text-red-500 animate-ping"
-              style={{ animationDuration: '600ms' }}
+              className="absolute inset-0 w-6 h-6 fill-red-500 text-red-500 animate-ping"
+              style={{ animationDuration: '300ms' }}
             />
             <div
-              className="absolute inset-0 w-5 h-5 rounded-full bg-red-200 animate-ping"
-              style={{ animationDuration: '600ms', opacity: 0.6 }}
+              className="absolute inset-0 w-6 h-6 rounded-full bg-red-200 animate-ping"
+              style={{ animationDuration: '300ms', opacity: 0.6 }}
             />
           </>
         )}
       </div>
-      <span
-        className={cn(
-          'text-sm font-medium tabular-nums transition-colors duration-200',
-          userLikeCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
-        )}
-      >
-        {likeCount}
-      </span>
     </button>
   );
 }

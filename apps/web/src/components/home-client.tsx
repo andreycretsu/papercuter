@@ -380,7 +380,7 @@ export function HomeClient(props: {
                 </div>
                 <div className="grid gap-4">
                   {filteredItems.map((p) => (
-                <div key={p.id} className="flex items-start gap-3">
+                <div key={p.id} className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(p.id)}
@@ -388,7 +388,7 @@ export function HomeClient(props: {
                       e.stopPropagation();
                       toggleSelection(p.id);
                     }}
-                    className="mt-5 h-4 w-4 rounded border-border flex-shrink-0"
+                    className="h-4 w-4 rounded border-border flex-shrink-0"
                   />
                   <Card className="border border-border p-4 hover:bg-accent transition-colors flex-1">
                     <Link href={`/papercuts/${p.id}`} className="block">
@@ -442,7 +442,7 @@ export function HomeClient(props: {
                       </div>
                     </Link>
                   </Card>
-                  <div onClick={(e) => e.stopPropagation()} className="mt-5 flex-shrink-0">
+                  <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
                     <LikeButton
                       papercutId={p.id}
                       initialLikeCount={p.likeCount || 0}
