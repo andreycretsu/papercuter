@@ -57,6 +57,28 @@ export function HomeClient(props: {
     setStatusFilter("all");
   };
 
+  // Keyboard shortcut for creating new papercut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if 'N' key is pressed (not in an input field)
+      if (
+        e.key === 'n' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement) &&
+        !(e.target instanceof HTMLSelectElement)
+      ) {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const refresh = async () => {
     try {
       const res = await fetch("/api/papercuts");
