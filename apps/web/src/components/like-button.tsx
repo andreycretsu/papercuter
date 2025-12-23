@@ -43,7 +43,13 @@ export function LikeButton({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update like');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Like API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          ...errorData
+        });
+        throw new Error(`Failed to update like: ${errorData.details || errorData.error || response.statusText}`);
       }
 
       const data = await response.json();

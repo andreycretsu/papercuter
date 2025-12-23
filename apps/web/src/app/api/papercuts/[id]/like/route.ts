@@ -40,7 +40,17 @@ export async function POST(
 
     if (likeError) {
       console.error('Error creating like:', likeError);
-      return NextResponse.json({ error: 'Failed to like' }, { status: 500 });
+      console.error('Error details:', {
+        message: likeError.message,
+        code: likeError.code,
+        details: likeError.details,
+        hint: likeError.hint,
+      });
+      return NextResponse.json({
+        error: 'Failed to like',
+        details: likeError.message,
+        code: likeError.code
+      }, { status: 500 });
     }
 
     // Get updated like counts
