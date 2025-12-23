@@ -283,8 +283,8 @@ export function HomeClient(props: {
                     onClick={() => setStatusFilter('all')}
                     className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       statusFilter === 'all'
-                        ? 'bg-background text-foreground shadow'
-                        : 'hover:bg-background/50'
+                        ? 'bg-white text-foreground shadow'
+                        : 'hover:bg-white/50'
                     }`}
                   >
                     All
@@ -293,8 +293,8 @@ export function HomeClient(props: {
                     onClick={() => setStatusFilter('open')}
                     className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       statusFilter === 'open'
-                        ? 'bg-background text-foreground shadow'
-                        : 'hover:bg-background/50'
+                        ? 'bg-white text-foreground shadow'
+                        : 'hover:bg-white/50'
                     }`}
                   >
                     Open
@@ -303,8 +303,8 @@ export function HomeClient(props: {
                     onClick={() => setStatusFilter('resolved')}
                     className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       statusFilter === 'resolved'
-                        ? 'bg-background text-foreground shadow'
-                        : 'hover:bg-background/50'
+                        ? 'bg-white text-foreground shadow'
+                        : 'hover:bg-white/50'
                     }`}
                   >
                     Resolved
