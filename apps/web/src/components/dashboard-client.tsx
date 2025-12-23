@@ -244,10 +244,10 @@ export function DashboardClient(props: {
       <PapercutFocusDialog
         open={open}
         onOpenChange={setOpen}
-        onCreate={refresh}
-        prefillScreenshotUrl={prefillScreenshotUrl}
+        initialScreenshotUrl={prefillScreenshotUrl}
         onCreated={() => {
           setPrefillScreenshotUrl(null);
+          refresh();
         }}
       />
     </div>
