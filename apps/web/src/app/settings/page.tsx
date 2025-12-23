@@ -33,7 +33,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto w-full px-6 py-6">
+      <div className="mx-auto w-full max-w-4xl px-6 py-6">
 
       <div className="space-y-6">
         <ApiKeyCard />

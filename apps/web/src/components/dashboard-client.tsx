@@ -102,7 +102,7 @@ export function DashboardClient(props: {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto w-full px-6 py-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         {props.initialError ? (
           <Card className="border border-border p-4 mb-6">
             <div className="text-[18px] font-semibold">Setup needed</div>
