@@ -61,7 +61,7 @@ export function LikeButton({
     >
       <span
         className={cn(
-          'text-sm font-semibold tabular-nums transition-colors duration-200',
+          'text-[12px] font-semibold tabular-nums transition-colors duration-200',
           userLikeCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
         )}
       >
