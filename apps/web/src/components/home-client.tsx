@@ -254,7 +254,7 @@ export function HomeClient(props: {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto w-full max-w-6xl px-6 py-6">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-6">
         {props.initialError ? (
           <Card className="border border-border p-4 mb-6">
             <div className="text-[18px] font-semibold">Setup needed</div>
