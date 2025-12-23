@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { PapercutFocusDialog } from "@/components/papercut-focus-dialog";
 import { LikeButton } from "@/components/like-button";
 import { Snowfall } from "@/components/snowfall";
-import { X } from "lucide-react";
+import { X, RotateCcw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -211,8 +211,8 @@ export function HomeClient(props: {
     <div className="min-h-screen bg-background">
       <Snowfall />
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="mx-auto w-full max-w-6xl px-6 py-4">
+      <div className="sticky top-0 z-10 bg-background border-b border-border w-full">
+        <div className="mx-auto w-full px-6 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-2xl font-semibold leading-tight">Papercuts</div>
@@ -254,7 +254,7 @@ export function HomeClient(props: {
       </div>
 
       {/* Main content */}
-      <div className="mx-auto w-full max-w-6xl px-6 pb-6">
+      <div className="mx-auto w-full px-6 pb-6">
         {props.initialError ? (
           <Card className="border border-border p-4 mb-6">
             <div className="text-[18px] font-semibold">Setup needed</div>
@@ -275,7 +275,7 @@ export function HomeClient(props: {
         ) : (
           <>
             {/* Sticky search and filters */}
-            <div className="sticky top-[89px] z-10 bg-background pt-4 pb-4 mb-4 border-b border-border">
+            <div className="sticky top-[86px] z-10 bg-background pt-4 pb-4 mb-4 border-b border-border w-full -mx-6 px-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 {/* Segmented Status Filter */}
                 <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
@@ -349,11 +349,12 @@ export function HomeClient(props: {
                   {hasActiveFilters && (
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={resetFilters}
-                      className="h-9"
+                      className="h-9 w-9"
+                      aria-label="Clear filters"
                     >
-                      Clear filters
+                      <RotateCcw className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

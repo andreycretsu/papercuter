@@ -10,14 +10,30 @@ export const dynamic = "force-dynamic";
 
 export default function SettingsPage() {
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
-      <div className="mb-6">
-        <Link href="/">
-          <Button variant="outline">← Back to list</Button>
-        </Link>
+    <div className="min-h-screen bg-background">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border w-full">
+        <div className="mx-auto w-full px-6 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-2xl font-semibold leading-tight">Settings</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Configure your API keys and integrations
+              </div>
+            </div>
+            <div>
+              <Link href="/">
+                <Button variant="outline" className="h-10">
+                  ← Back to list
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      {/* Main content */}
+      <div className="mx-auto w-full px-6 py-6">
 
       <div className="space-y-6">
         <ApiKeyCard />
@@ -48,8 +64,9 @@ export default function SettingsPage() {
           <ExtensionVersion />
         </Card>
 
-        <div className="flex justify-end pt-4">
-          <LogoutButton />
+          <div className="flex justify-end pt-4">
+            <LogoutButton />
+          </div>
         </div>
       </div>
     </div>
