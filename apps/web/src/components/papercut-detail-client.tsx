@@ -48,7 +48,7 @@ type Papercut = {
   status: PapercutStatus;
   type: PapercutType;
   likeCount?: number;
-  isLikedByCurrentUser?: boolean;
+  userLikeCount?: number;
 };
 
 export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
@@ -223,7 +223,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
               <LikeButton
                 papercutId={papercut.id}
                 initialLikeCount={papercut.likeCount || 0}
-                initialIsLiked={papercut.isLikedByCurrentUser || false}
+                initialUserLikeCount={papercut.userLikeCount || 0}
               />
             </div>
           </div>

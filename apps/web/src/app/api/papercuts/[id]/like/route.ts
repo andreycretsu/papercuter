@@ -30,19 +30,7 @@ export async function POST(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if already liked
-    const { data: existingLike } = await supabase
-      .from('papercut_likes')
-      .select('id')
-      .eq('papercut_id', papercutId)
-      .eq('user_id', userData.id)
-      .single();
-
-    if (existingLike) {
-      return NextResponse.json({ error: 'Already liked' }, { status: 400 });
-    }
-
-    // Create like
+    // Add a new like (unlimited likes allowed)
     const { error: likeError } = await supabase
       .from('papercut_likes')
       .insert({
@@ -55,13 +43,23 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to like' }, { status: 500 });
     }
 
-    // Get updated like count
-    const { count } = await supabase
+    // Get updated like counts
+    const { count: totalCount } = await supabase
       .from('papercut_likes')
       .select('*', { count: 'exact', head: true })
       .eq('papercut_id', papercutId);
 
-    return NextResponse.json({ success: true, likeCount: count || 0 });
+    const { count: userCount } = await supabase
+      .from('papercut_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('papercut_id', papercutId)
+      .eq('user_id', userData.id);
+
+    return NextResponse.json({
+      success: true,
+      likeCount: totalCount || 0,
+      userLikeCount: userCount || 0
+    });
   } catch (error) {
     console.error('Error in like endpoint:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -92,25 +90,47 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Delete like
+    // Get one like to delete
+    const { data: likeToDelete } = await supabase
+      .from('papercut_likes')
+      .select('id')
+      .eq('papercut_id', papercutId)
+      .eq('user_id', userData.id)
+      .limit(1)
+      .single();
+
+    if (!likeToDelete) {
+      return NextResponse.json({ error: 'No likes to remove' }, { status: 400 });
+    }
+
+    // Delete one like
     const { error: deleteError } = await supabase
       .from('papercut_likes')
       .delete()
-      .eq('papercut_id', papercutId)
-      .eq('user_id', userData.id);
+      .eq('id', likeToDelete.id);
 
     if (deleteError) {
       console.error('Error deleting like:', deleteError);
       return NextResponse.json({ error: 'Failed to unlike' }, { status: 500 });
     }
 
-    // Get updated like count
-    const { count } = await supabase
+    // Get updated like counts
+    const { count: totalCount } = await supabase
       .from('papercut_likes')
       .select('*', { count: 'exact', head: true })
       .eq('papercut_id', papercutId);
 
-    return NextResponse.json({ success: true, likeCount: count || 0 });
+    const { count: userCount } = await supabase
+      .from('papercut_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('papercut_id', papercutId)
+      .eq('user_id', userData.id);
+
+    return NextResponse.json({
+      success: true,
+      likeCount: totalCount || 0,
+      userLikeCount: userCount || 0
+    });
   } catch (error) {
     console.error('Error in unlike endpoint:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

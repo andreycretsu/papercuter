@@ -446,7 +446,7 @@ export function HomeClient(props: {
                         <LikeButton
                           papercutId={p.id}
                           initialLikeCount={p.likeCount || 0}
-                          initialIsLiked={p.isLikedByCurrentUser || false}
+                          initialUserLikeCount={p.userLikeCount || 0}
                         />
                       </div>
                     </div>
