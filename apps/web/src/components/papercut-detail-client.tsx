@@ -254,15 +254,6 @@ export function PapercutDetailClient({
                 {currentStatus === 'resolved' ? 'Resolved' : 'Open'}
               </span>
             </div>
-            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <div>Created {new Date(papercut.createdAt).toLocaleString()}</div>
-              {papercut.userEmail && (
-                <div className="flex items-center gap-1">
-                  <span>Created by:</span>
-                  <span className="font-medium">{papercut.userEmail}</span>
-                </div>
-              )}
-            </div>
             <div className="mt-3">
               <LikeButton
                 papercutId={papercut.id}
