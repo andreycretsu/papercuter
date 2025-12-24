@@ -204,8 +204,10 @@ export async function createPapercutSupabase(input: {
   };
 }
 
-export async function updatePapercutStatus(id: string, status: PapercutStatus): Promise<void> {
+export async function updatePapercutStatus(id: string, status: PapercutStatus, userEmail: string = "Unknown"): Promise<void> {
   const supabase = getSupabaseAdmin();
+
+  // Update the papercut status
   const { error } = await supabase
     .from("papercuts")
     .update({ status })
@@ -215,6 +217,51 @@ export async function updatePapercutStatus(id: string, status: PapercutStatus): 
     console.error("[updatePapercutStatus] Database error:", error);
     throw error;
   }
+
+  // Log the activity
+  const action = status === 'resolved' ? 'resolved' : 'reopened';
+  const { error: activityError } = await supabase
+    .from("papercut_activity")
+    .insert({
+      papercut_id: id,
+      user_email: userEmail,
+      action,
+    });
+
+  if (activityError) {
+    console.error("[updatePapercutStatus] Failed to log activity:", activityError);
+    // Don't throw - activity logging failure shouldn't fail the status update
+  }
+}
+
+export type PapercutActivity = {
+  id: string;
+  papercutId: string;
+  userEmail: string;
+  action: 'created' | 'edited' | 'resolved' | 'reopened';
+  createdAt: string;
+};
+
+export async function getPapercutActivity(papercutId: string): Promise<PapercutActivity[]> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("papercut_activity")
+    .select("id, papercut_id, user_email, action, created_at")
+    .eq("papercut_id", papercutId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[getPapercutActivity] Database error:", error);
+    return [];
+  }
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    papercutId: row.papercut_id,
+    userEmail: row.user_email,
+    action: row.action,
+    createdAt: row.created_at,
+  }));
 }
 
 

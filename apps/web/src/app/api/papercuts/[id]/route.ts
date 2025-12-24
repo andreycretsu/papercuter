@@ -43,6 +43,7 @@ export async function PATCH(
 
   const body = (await req.json().catch(() => null)) as null | {
     status?: unknown;
+    userEmail?: unknown;
   };
 
   if (!body || typeof body.status !== "string" || !PAPERCUT_STATUSES.includes(body.status as PapercutStatus)) {
@@ -52,8 +53,10 @@ export async function PATCH(
     );
   }
 
+  const userEmail = typeof body.userEmail === "string" ? body.userEmail : "Unknown";
+
   try {
-    await updatePapercutStatus(id, body.status as PapercutStatus);
+    await updatePapercutStatus(id, body.status as PapercutStatus, userEmail);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Update Papercut Status] Error:", error);

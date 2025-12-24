@@ -51,7 +51,23 @@ type Papercut = {
   userLikeCount?: number;
 };
 
-export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
+type PapercutActivity = {
+  id: string;
+  papercutId: string;
+  userEmail: string;
+  action: 'created' | 'edited' | 'resolved' | 'reopened';
+  createdAt: string;
+};
+
+export function PapercutDetailClient({
+  papercut,
+  initialActivity = [],
+  currentUserEmail
+}: {
+  papercut: Papercut;
+  initialActivity?: PapercutActivity[];
+  currentUserEmail?: string;
+}) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
@@ -62,6 +78,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
   const [jiraProjects, setJiraProjects] = React.useState<Array<{key: string, name: string}>>([]);
   const [selectedProject, setSelectedProject] = React.useState<string>("");
   const [isLoadingProjects, setIsLoadingProjects] = React.useState(false);
+  const [activity, setActivity] = React.useState<PapercutActivity[]>(initialActivity);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -94,7 +111,10 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
       const res = await fetch(`/api/papercuts/${papercut.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          userEmail: currentUserEmail || "Unknown"
+        }),
       });
 
       if (!res.ok) {
@@ -103,6 +123,14 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
 
       setCurrentStatus(newStatus);
       toast.success(newStatus === 'resolved' ? "Papercut resolved" : "Papercut reopened");
+
+      // Refresh activity data
+      const activityRes = await fetch(`/api/papercuts/${papercut.id}/activity`);
+      if (activityRes.ok) {
+        const data = await activityRes.json();
+        setActivity(data.activity || []);
+      }
+
       router.refresh();
     } catch {
       toast.error("Couldn't update papercut status");
@@ -181,31 +209,15 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
     }
   };
 
-  // Mock activity timeline - will be replaced with real data later
+  // Activity timeline from real database activity log
   const activityTimeline = React.useMemo(() => {
-    const events = [
-      {
-        id: '1',
-        action: 'created',
-        user: papercut.userEmail || 'Unknown',
-        timestamp: papercut.createdAt,
-        status: null as PapercutStatus | null,
-      }
-    ];
-
-    // Add status change event if resolved
-    if (currentStatus === 'resolved') {
-      events.push({
-        id: '2',
-        action: 'resolved',
-        user: papercut.userEmail || 'Unknown',
-        timestamp: papercut.createdAt, // Mock timestamp - will be real when we have activity log
-        status: 'resolved' as PapercutStatus,
-      });
-    }
-
-    return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [papercut, currentStatus]);
+    return activity.map(event => ({
+      id: event.id,
+      action: event.action,
+      user: event.userEmail,
+      timestamp: event.createdAt,
+    }));
+  }, [activity]);
 
   return (
     <div className="flex gap-6">
@@ -214,36 +226,47 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
         <div className="sticky top-24">
           <h3 className="text-sm font-semibold text-foreground mb-4">Activity</h3>
           <div className="space-y-4">
-            {activityTimeline.map((event, index) => (
-              <div key={event.id} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <div className={`w-2 h-2 rounded-full ${
-                    event.action === 'resolved' ? 'bg-green-600' : 'bg-blue-600'
-                  }`} />
-                  {index < activityTimeline.length - 1 && (
-                    <div className="w-0.5 h-full min-h-[40px] bg-border" />
-                  )}
-                </div>
-                <div className="flex-1 pb-4">
-                  <div className="text-sm text-foreground">
-                    <span className="font-medium">{event.user}</span>
-                    {' '}
-                    <span className="text-muted-foreground">
-                      {event.action === 'resolved' ? 'resolved papercut' : 'created papercut'}
-                    </span>
+            {activityTimeline.map((event, index) => {
+              const actionColor = event.action === 'resolved' ? 'bg-green-600' :
+                                 event.action === 'reopened' ? 'bg-yellow-600' :
+                                 event.action === 'edited' ? 'bg-purple-600' :
+                                 'bg-blue-600';
+
+              const actionText = event.action === 'created' ? 'created papercut' :
+                                event.action === 'resolved' ? 'resolved papercut' :
+                                event.action === 'reopened' ? 'reopened papercut' :
+                                event.action === 'edited' ? 'edited papercut' :
+                                event.action;
+
+              return (
+                <div key={event.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full ${actionColor}`} />
+                    {index < activityTimeline.length - 1 && (
+                      <div className="w-0.5 h-full min-h-[40px] bg-border" />
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {new Date(event.timestamp).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <div className="flex-1 pb-4">
+                    <div className="text-sm text-foreground">
+                      <span className="font-medium">{event.user}</span>
+                      {' '}
+                      <span className="text-muted-foreground">
+                        {actionText}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(event.timestamp).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getPapercutById } from "@/server/papercuts-supabase-store";
+import { getPapercutById, getPapercutActivity } from "@/server/papercuts-supabase-store";
 import { PapercutDetailClient } from "@/components/papercut-detail-client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -18,8 +18,10 @@ export default async function PapercutPage({
   const userEmail = session?.user?.email || undefined;
 
   let papercut;
+  let activity;
   try {
     papercut = await getPapercutById(id, userEmail);
+    activity = await getPapercutActivity(id);
   } catch {
     notFound();
   }
@@ -37,7 +39,7 @@ export default async function PapercutPage({
           </Link>
         </div>
 
-        <PapercutDetailClient papercut={papercut} />
+        <PapercutDetailClient papercut={papercut} initialActivity={activity} currentUserEmail={userEmail} />
       </div>
     </div>
   );
