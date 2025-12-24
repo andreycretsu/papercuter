@@ -25,16 +25,8 @@ export async function generateMetadata({
       };
     }
 
-    // Strip HTML tags from description for plain text
-    const tempDiv = typeof document !== 'undefined' ? document.createElement('div') : null;
-    let description = papercut.descriptionHtml;
-    if (tempDiv) {
-      tempDiv.innerHTML = papercut.descriptionHtml;
-      description = tempDiv.textContent || tempDiv.innerText || papercut.descriptionHtml;
-    } else {
-      // Server-side: simple regex to strip HTML
-      description = papercut.descriptionHtml.replace(/<[^>]*>/g, '');
-    }
+    // Strip HTML tags from description for plain text (server-side)
+    let description = papercut.descriptionHtml.replace(/<[^>]*>/g, '').trim();
 
     // Truncate description to 200 characters
     const truncatedDescription = description.length > 200
@@ -42,11 +34,12 @@ export async function generateMetadata({
       : description;
 
     return {
-      title: papercut.name,
-      description: truncatedDescription,
+      title: `${papercut.name} | Cleaqops Papercuts`,
+      description: truncatedDescription || 'View this papercut on Cleaqops',
       openGraph: {
         title: papercut.name,
-        description: truncatedDescription,
+        description: truncatedDescription || 'View this papercut on Cleaqops',
+        siteName: 'Cleaqops Papercuts',
         images: papercut.screenshotUrl ? [
           {
             url: papercut.screenshotUrl,
@@ -60,7 +53,7 @@ export async function generateMetadata({
       twitter: {
         card: 'summary_large_image',
         title: papercut.name,
-        description: truncatedDescription,
+        description: truncatedDescription || 'View this papercut on Cleaqops',
         images: papercut.screenshotUrl ? [papercut.screenshotUrl] : [],
       },
     };
