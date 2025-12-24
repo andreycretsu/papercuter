@@ -113,10 +113,16 @@ export async function PUT(
 
   try {
     const supabase = getSupabaseAdmin();
+
+    // Extract first image from descriptionHtml for thumbnail
+    const { extractFirstImageUrl } = await import("@/server/papercuts-supabase-store");
+    const screenshotUrl = extractFirstImageUrl(descriptionHtml);
+
     const updateData: any = {
       name,
       description_html: descriptionHtml,
       module,
+      screenshot_url: screenshotUrl,
     };
 
     if (type) {

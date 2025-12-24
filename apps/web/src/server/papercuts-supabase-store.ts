@@ -1,5 +1,19 @@
 import { getSupabaseAdmin } from "@/server/supabase-admin";
 
+/**
+ * Extract the first image URL from HTML content
+ * Returns null if no image found
+ */
+export function extractFirstImageUrl(html: string): string | null {
+  if (!html) return null;
+
+  // Match <img> tags and extract src attribute
+  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/i;
+  const match = html.match(imgRegex);
+
+  return match ? match[1] : null;
+}
+
 export type PapercutModule = 'CoreHR' | 'Recruit' | 'Perform' | 'Pulse' | 'Time' | 'Desk' | 'Interface';
 export type PapercutStatus = 'open' | 'resolved';
 export type PapercutType = 'UXUI' | 'Feature Idea';
@@ -169,10 +183,17 @@ export async function createPapercutSupabase(input: {
 }): Promise<Papercut> {
   const supabase = getSupabaseAdmin();
   const name = input.name.trim() || "Untitled";
+
+  // Use provided screenshotUrl, or extract first image from descriptionHtml
+  let screenshotUrl = input.screenshotUrl ?? null;
+  if (!screenshotUrl && input.descriptionHtml) {
+    screenshotUrl = extractFirstImageUrl(input.descriptionHtml);
+  }
+
   const insert = {
     name,
     description_html: input.descriptionHtml ?? "",
-    screenshot_url: input.screenshotUrl ?? null,
+    screenshot_url: screenshotUrl,
     user_email: input.userEmail ?? null,
     module: input.module ?? null,
     type: input.type ?? 'UXUI',
