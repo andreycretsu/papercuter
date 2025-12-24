@@ -434,17 +434,6 @@ export function MainLayout(props: {
                     <Card key={p.id} className="border border-border p-3 hover:bg-accent transition-colors h-[72px]">
                       <Link href={`/papercuts/${p.id}`} className="block h-full">
                         <div className="flex items-center gap-3 h-full">
-                          {p.screenshotUrl && (
-                            <div className="shrink-0 w-[80px] h-[48px] rounded-md overflow-hidden bg-gray-100">
-                              <Image
-                                src={p.screenshotUrl}
-                                alt={p.name}
-                                width={80}
-                                height={48}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <div className="truncate text-sm font-semibold">
@@ -475,6 +464,17 @@ export function MainLayout(props: {
                               {p.userEmail && <span className="truncate">{p.userEmail}</span>}
                             </div>
                           </div>
+                          {p.screenshotUrl && (
+                            <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100">
+                              <Image
+                                src={p.screenshotUrl}
+                                alt={p.name}
+                                width={112}
+                                height={64}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
                         </div>
                       </Link>
                     </Card>
@@ -617,17 +617,6 @@ export function MainLayout(props: {
                       <Card className="border border-border p-3 hover:bg-accent transition-colors flex-1 h-[72px]">
                         <Link href={`/papercuts/${p.id}`} className="block h-full">
                           <div className="flex items-center gap-3 h-full">
-                            {p.screenshotUrl && (
-                              <div className="shrink-0 w-[80px] h-[48px] rounded-md overflow-hidden bg-gray-100">
-                                <Image
-                                  src={p.screenshotUrl}
-                                  alt={p.name}
-                                  width={80}
-                                  height={48}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            )}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <div className="truncate text-sm font-semibold">
@@ -658,6 +647,17 @@ export function MainLayout(props: {
                                 {p.userEmail && <span className="truncate">{p.userEmail}</span>}
                               </div>
                             </div>
+                            {p.screenshotUrl && (
+                              <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100">
+                                <Image
+                                  src={p.screenshotUrl}
+                                  alt={p.name}
+                                  width={112}
+                                  height={64}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            )}
                           </div>
                         </Link>
                       </Card>
