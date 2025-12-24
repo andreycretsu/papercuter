@@ -5,8 +5,71 @@ import { getPapercutById, getPapercutActivity } from "@/server/papercuts-supabas
 import { PapercutDetailClient } from "@/components/papercut-detail-client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+
+  try {
+    const papercut = await getPapercutById(id);
+
+    if (!papercut) {
+      return {
+        title: "Papercut Not Found",
+      };
+    }
+
+    // Strip HTML tags from description for plain text
+    const tempDiv = typeof document !== 'undefined' ? document.createElement('div') : null;
+    let description = papercut.descriptionHtml;
+    if (tempDiv) {
+      tempDiv.innerHTML = papercut.descriptionHtml;
+      description = tempDiv.textContent || tempDiv.innerText || papercut.descriptionHtml;
+    } else {
+      // Server-side: simple regex to strip HTML
+      description = papercut.descriptionHtml.replace(/<[^>]*>/g, '');
+    }
+
+    // Truncate description to 200 characters
+    const truncatedDescription = description.length > 200
+      ? description.substring(0, 200) + '...'
+      : description;
+
+    return {
+      title: papercut.name,
+      description: truncatedDescription,
+      openGraph: {
+        title: papercut.name,
+        description: truncatedDescription,
+        images: papercut.screenshotUrl ? [
+          {
+            url: papercut.screenshotUrl,
+            width: 1200,
+            height: 630,
+            alt: papercut.name,
+          }
+        ] : [],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: papercut.name,
+        description: truncatedDescription,
+        images: papercut.screenshotUrl ? [papercut.screenshotUrl] : [],
+      },
+    };
+  } catch {
+    return {
+      title: "Papercut Not Found",
+    };
+  }
+}
 
 export default async function PapercutPage({
   params,
