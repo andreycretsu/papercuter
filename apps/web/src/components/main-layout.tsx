@@ -407,24 +407,56 @@ export function MainLayout(props: {
                   <div className="text-sm text-muted-foreground">No modules yet</div>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {moduleStats.map((stat) => (
-                    <Card key={stat.module} className="border border-border p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{stat.module}</span>
-                        <span className="text-2xl font-bold">{stat.count}</span>
-                      </div>
-                      <div className="mt-2 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <Card className="border border-border p-6">
+                  {/* Module labels with counts */}
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
+                    {moduleStats.map((stat, index) => {
+                      const colors = [
+                        'text-blue-600',
+                        'text-green-600',
+                        'text-purple-600',
+                        'text-orange-600',
+                        'text-pink-600',
+                        'text-teal-600',
+                        'text-indigo-600',
+                      ];
+                      const colorClass = colors[index % colors.length];
+
+                      return (
+                        <div key={stat.module} className="flex items-center gap-2">
+                          <span className={`font-medium ${colorClass}`}>{stat.module}</span>
+                          <span className="text-2xl font-bold">{stat.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Single horizontal bar with segments */}
+                  <div className="flex h-8 rounded-lg overflow-hidden gap-px bg-border">
+                    {moduleStats.map((stat, index) => {
+                      const colors = [
+                        'bg-blue-600',
+                        'bg-green-600',
+                        'bg-purple-600',
+                        'bg-orange-600',
+                        'bg-pink-600',
+                        'bg-teal-600',
+                        'bg-indigo-600',
+                      ];
+                      const colorClass = colors[index % colors.length];
+                      const percentage = (stat.count / items.length) * 100;
+
+                      return (
                         <div
-                          className="h-full bg-blue-600"
-                          style={{
-                            width: `${(stat.count / items.length) * 100}%`,
-                          }}
+                          key={stat.module}
+                          className={`${colorClass} transition-all`}
+                          style={{ width: `${percentage}%` }}
+                          title={`${stat.module}: ${stat.count}`}
                         />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                </Card>
               )}
             </div>
 
