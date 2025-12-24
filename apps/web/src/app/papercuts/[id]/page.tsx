@@ -23,6 +23,12 @@ export async function generateMetadata({
       console.error('[generateMetadata] Papercut not found:', id);
       return {
         title: "Papercut Not Found",
+        description: "This papercut could not be found",
+        openGraph: {
+          title: "Papercut Not Found",
+          description: "This papercut could not be found",
+          type: 'website' as const,
+        },
       };
     }
 
@@ -81,6 +87,12 @@ export async function generateMetadata({
     console.error('[generateMetadata] Error:', error);
     return {
       title: "Papercut Not Found",
+      description: "Error loading papercut",
+      openGraph: {
+        title: "Papercut Not Found",
+        description: "Error loading papercut",
+        type: 'website' as const,
+      },
     };
   }
 }
