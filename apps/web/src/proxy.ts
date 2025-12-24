@@ -28,7 +28,8 @@ export const config = {
      * - signup (signup page)
      * - forgot-password (forgot password page)
      * - reset-password (reset password page)
+     * - papercuts (papercut detail pages - public for OG scrapers)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|forgot-password|reset-password).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|forgot-password|reset-password|papercuts).*)",
   ],
 };
