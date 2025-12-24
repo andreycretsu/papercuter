@@ -34,7 +34,7 @@ export default async function PapercutPage({
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-6">
-          <Link href="/papercuts-list">
+          <Link href="/?tab=papercuts">
             <Button variant="outline">← Back to list</Button>
           </Link>
         </div>

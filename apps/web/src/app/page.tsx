@@ -6,13 +6,21 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   let papercuts: Papercut[] = [];
   let setupError: string | null = null;
 
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role || 'editor';
   const userEmail = session?.user?.email || undefined;
+
+  // Get tab from query params
+  const params = await searchParams;
+  const tab = params.tab === 'papercuts' ? 'papercuts' : 'dashboard';
 
   try {
     papercuts = await listPapercutsSupabase(undefined, userEmail);
@@ -26,7 +34,7 @@ export default async function Home() {
       initialPapercuts={papercuts}
       initialError={setupError}
       userRole={userRole}
-      initialTab="dashboard"
+      initialTab={tab}
     />
   );
 }
