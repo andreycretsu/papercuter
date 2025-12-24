@@ -14,8 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Papercuts",
+  title: {
+    default: "Papercuts",
+    template: "%s | Cleaqops Papercuts",
+  },
   description: "Capture papercuts from screenshots",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'https://cleaqops.com'),
 };
 
 export default function RootLayout({

@@ -33,28 +33,35 @@ export async function generateMetadata({
       ? description.substring(0, 200) + '...'
       : description;
 
+    const ogDescription = truncatedDescription || 'View this papercut on Cleaqops';
+    const ogImage = papercut.screenshotUrl || null;
+
     return {
-      title: `${papercut.name} | Cleaqops Papercuts`,
-      description: truncatedDescription || 'View this papercut on Cleaqops',
+      title: papercut.name,
+      description: ogDescription,
       openGraph: {
         title: papercut.name,
-        description: truncatedDescription || 'View this papercut on Cleaqops',
+        description: ogDescription,
         siteName: 'Cleaqops Papercuts',
-        images: papercut.screenshotUrl ? [
-          {
-            url: papercut.screenshotUrl,
-            width: 1200,
-            height: 630,
-            alt: papercut.name,
-          }
-        ] : [],
+        ...(ogImage ? {
+          images: [
+            {
+              url: ogImage,
+              width: 1200,
+              height: 630,
+              alt: papercut.name,
+            }
+          ],
+        } : {}),
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
         title: papercut.name,
-        description: truncatedDescription || 'View this papercut on Cleaqops',
-        images: papercut.screenshotUrl ? [papercut.screenshotUrl] : [],
+        description: ogDescription,
+        ...(ogImage ? {
+          images: [ogImage],
+        } : {}),
       },
     };
   } catch {
