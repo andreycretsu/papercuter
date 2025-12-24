@@ -60,15 +60,20 @@ export function HomeClient(props: {
   // Keyboard shortcut for creating new papercut
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if 'N' key is pressed (not in an input field)
+      // Check if we're in an editable element
+      const target = e.target as HTMLElement;
+      const isEditableElement =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target.isContentEditable;
+
       if (
         e.key === 'n' &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
-        !(e.target instanceof HTMLInputElement) &&
-        !(e.target instanceof HTMLTextAreaElement) &&
-        !(e.target instanceof HTMLSelectElement)
+        !isEditableElement
       ) {
         e.preventDefault();
         setOpen(true);
