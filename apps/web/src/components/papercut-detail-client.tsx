@@ -220,9 +220,12 @@ export function PapercutDetailClient({
   }, [activity]);
 
   return (
-    <div className="flex gap-6 justify-center">
+    <div className="flex gap-6">
+      {/* Spacer for centering */}
+      <div className="flex-1"></div>
+
       {/* Main Content - Centered */}
-      <div className="flex-1 max-w-3xl">
+      <div className="w-full max-w-3xl shrink-0">
         <Card className="border border-border p-8 mb-32">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
