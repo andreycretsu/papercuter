@@ -586,38 +586,37 @@ export function MainLayout(props: {
                         }}
                         className="h-4 w-4 rounded border-border flex-shrink-0"
                       />
-                      <Card className="border border-border p-4 hover:bg-accent transition-colors flex-1">
-                        <Link href={`/papercuts/${p.id}`} className="block">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="truncate text-[18px] font-semibold">
+                      <Card className="border border-border p-3 hover:bg-accent transition-colors flex-1 h-[72px]">
+                        <Link href={`/papercuts/${p.id}`} className="block h-full">
+                          <div className="flex items-center gap-3 h-full">
+                            {p.screenshotUrl && (
+                              <div className="shrink-0 w-[80px] h-[48px] rounded-md overflow-hidden bg-gray-100">
+                                <Image
+                                  src={p.screenshotUrl}
+                                  alt={p.name}
+                                  width={80}
+                                  height={48}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="truncate text-sm font-semibold">
                                   {p.name}
                                 </div>
                                 {p.module && (
-                                  <span className="shrink-0 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                  <span className="shrink-0 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">
                                     {p.module}
                                   </span>
                                 )}
                                 {p.type && (
-                                  <span className="shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+                                  <span className="shrink-0 rounded-md bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-800">
                                     {p.type}
                                   </span>
                                 )}
-                              </div>
-                              {p.descriptionHtml && (
-                                <div
-                                  className="mt-1 text-sm text-muted-foreground line-clamp-2"
-                                  dangerouslySetInnerHTML={{
-                                    __html: p.descriptionHtml,
-                                  }}
-                                />
-                              )}
-                              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                                <span>{new Date(p.createdAt).toLocaleDateString()}</span>
-                                {p.userEmail && <span>{p.userEmail}</span>}
                                 <span
-                                  className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
+                                  className={`shrink-0 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ${
                                     p.status === "open"
                                       ? "bg-green-100 text-green-800"
                                       : "bg-gray-100 text-gray-800"
@@ -626,18 +625,11 @@ export function MainLayout(props: {
                                   {p.status}
                                 </span>
                               </div>
-                            </div>
-                            {p.screenshotUrl ? (
-                              <div className="shrink-0 w-[280px] h-[160px] rounded-md overflow-hidden bg-gray-100">
-                                <Image
-                                  src={p.screenshotUrl}
-                                  alt={p.name}
-                                  width={280}
-                                  height={160}
-                                  className="h-full w-full object-cover"
-                                />
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                                {p.userEmail && <span className="truncate">{p.userEmail}</span>}
                               </div>
-                            ) : null}
+                            </div>
                           </div>
                         </Link>
                       </Card>
