@@ -55,17 +55,17 @@ export function MainLayout(props: {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [moduleFilter, setModuleFilter] = React.useState<string>("all");
   const [emailFilter, setEmailFilter] = React.useState<string>("all");
-  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [statusFilter, setStatusFilter] = React.useState<string>("open");
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery || moduleFilter !== "all" || emailFilter !== "all" || statusFilter !== "all";
+  const hasActiveFilters = searchQuery || moduleFilter !== "all" || emailFilter !== "all" || statusFilter !== "open";
 
   // Reset all filters
   const resetFilters = () => {
     setSearchQuery("");
     setModuleFilter("all");
     setEmailFilter("all");
-    setStatusFilter("all");
+    setStatusFilter("open");
   };
 
   // Keyboard shortcut for creating new papercut
@@ -285,7 +285,7 @@ export function MainLayout(props: {
                 onClick={() => setActiveTab("dashboard")}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                   activeTab === "dashboard"
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-white text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -295,7 +295,7 @@ export function MainLayout(props: {
                 onClick={() => setActiveTab("papercuts")}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                   activeTab === "papercuts"
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-white text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
