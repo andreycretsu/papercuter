@@ -290,6 +290,9 @@ export function MainLayout(props: {
                 }`}
               >
                 Dashboard
+                <span className="ml-2 text-xs opacity-70">
+                  {items.filter(p => p.status === 'resolved').length}
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab("papercuts")}
@@ -300,6 +303,9 @@ export function MainLayout(props: {
                 }`}
               >
                 Papercuts
+                <span className="ml-2 text-xs opacity-70">
+                  {items.length}
+                </span>
               </button>
             </div>
 
