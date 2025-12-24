@@ -252,7 +252,7 @@ export function MainLayout(props: {
   }, [items, searchQuery, moduleFilter, emailFilter, statusFilter]);
 
   const uniqueEmails = React.useMemo(() => {
-    return Array.from(new Set(items.map((p) => p.userEmail).filter(Boolean)));
+    return Array.from(new Set(items.map((p) => p.userEmail).filter(Boolean))) as string[];
   }, [items]);
 
   return (
