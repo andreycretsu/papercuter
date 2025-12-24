@@ -220,7 +220,7 @@ export function PapercutDetailClient({
   }, [activity]);
 
   return (
-    <div className="grid grid-cols-[1fr_minmax(0,768px)_256px] gap-6">
+    <div className="grid grid-cols-[1fr_minmax(0,920px)_1fr] gap-6 px-6">
       {/* Empty left column for spacing */}
       <div></div>
 
