@@ -393,7 +393,7 @@ export function MainLayout(props: {
             </div>
 
             {/* Module breakdown */}
-            <div>
+            <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Papercuts by Module</h2>
               {moduleStats.length === 0 ? (
                 <Card className="border border-border p-6">
@@ -416,6 +416,40 @@ export function MainLayout(props: {
                         />
                       </div>
                     </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recent Papercuts */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Recent Papercuts</h2>
+              {items.length === 0 ? (
+                <Card className="border border-border p-6">
+                  <div className="text-sm text-muted-foreground">No papercuts yet</div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.slice(0, 12).map((p) => (
+                    <Link key={p.id} href={`/papercuts/${p.id}`}>
+                      <Card className="border border-border p-4 hover:bg-accent transition-colors h-full">
+                        {p.screenshotUrl && (
+                          <div className="w-full h-32 rounded-md overflow-hidden bg-gray-100 mb-3">
+                            <Image
+                              src={p.screenshotUrl}
+                              alt={p.name}
+                              width={280}
+                              height={128}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="text-sm font-semibold truncate mb-1">{p.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {p.userEmail || 'Unknown'}
+                        </div>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}
