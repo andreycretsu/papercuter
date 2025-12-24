@@ -10,7 +10,13 @@ import { Card } from "@/components/ui/card";
 import { DescriptionEditor } from "@/components/description-editor";
 import { PAPERCUT_MODULES, PAPERCUT_TYPES, type PapercutModule, type PapercutType, type Papercut } from "@/server/papercuts-supabase-store";
 
-export function PapercutEditClient({ papercut }: { papercut: Papercut }) {
+export function PapercutEditClient({
+  papercut,
+  currentUserEmail
+}: {
+  papercut: Papercut;
+  currentUserEmail?: string;
+}) {
   const router = useRouter();
   const [name, setName] = React.useState(papercut.name);
   const [nameError, setNameError] = React.useState<string | null>(null);
@@ -45,6 +51,7 @@ export function PapercutEditClient({ papercut }: { papercut: Papercut }) {
           descriptionHtml,
           module: module || null,
           type,
+          userEmail: currentUserEmail || "Unknown",
         }),
       });
 

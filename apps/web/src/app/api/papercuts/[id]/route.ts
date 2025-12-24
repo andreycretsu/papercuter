@@ -81,6 +81,7 @@ export async function PUT(
     descriptionHtml?: unknown;
     module?: unknown;
     type?: unknown;
+    userEmail?: unknown;
   };
 
   if (!body || typeof body.name !== "string" || !body.name.trim()) {
@@ -94,6 +95,7 @@ export async function PUT(
   const descriptionHtml = typeof body.descriptionHtml === "string" ? body.descriptionHtml : "";
   const module = typeof body.module === "string" && body.module.trim() ? body.module : null;
   const type = typeof body.type === "string" && body.type.trim() ? body.type : null;
+  const userEmail = typeof body.userEmail === "string" ? body.userEmail : "Unknown";
 
   if (module && !PAPERCUT_MODULES.includes(module as PapercutModule)) {
     return NextResponse.json(
@@ -127,6 +129,20 @@ export async function PUT(
       .eq("id", id);
 
     if (error) throw error;
+
+    // Log the edit activity
+    const { error: activityError } = await supabase
+      .from("papercut_activity")
+      .insert({
+        papercut_id: id,
+        user_email: userEmail,
+        action: 'edited',
+      });
+
+    if (activityError) {
+      console.error("[Update Papercut] Failed to log activity:", activityError);
+      // Don't throw - activity logging failure shouldn't fail the update
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
