@@ -211,13 +211,27 @@ export function PapercutDetailClient({
 
   // Activity timeline from real database activity log
   const activityTimeline = React.useMemo(() => {
-    return activity.map(event => ({
+    const timeline = activity.map(event => ({
       id: event.id,
       action: event.action,
       user: event.userEmail,
       timestamp: event.createdAt,
     }));
-  }, [activity]);
+
+    // If there's no "created" event in the activity log, add it from the papercut data
+    const hasCreatedEvent = timeline.some(event => event.action === 'created');
+    if (!hasCreatedEvent) {
+      timeline.push({
+        id: 'fallback-created',
+        action: 'created' as const,
+        user: papercut.userEmail || 'Unknown',
+        timestamp: papercut.createdAt,
+      });
+    }
+
+    // Sort by timestamp descending (newest first)
+    return timeline.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [activity, papercut.createdAt, papercut.userEmail]);
 
   return (
     <div className="grid grid-cols-[1fr_minmax(0,920px)_1fr] gap-6 px-6">
