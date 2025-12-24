@@ -220,12 +220,12 @@ export function PapercutDetailClient({
   }, [activity]);
 
   return (
-    <div className="flex gap-6">
-      {/* Spacer for centering */}
-      <div className="flex-1"></div>
+    <div className="grid grid-cols-[1fr_minmax(0,768px)_256px] gap-6">
+      {/* Empty left column for spacing */}
+      <div></div>
 
       {/* Main Content - Centered */}
-      <div className="w-full max-w-3xl shrink-0">
+      <div>
         <Card className="border border-border p-8 mb-32">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
@@ -435,7 +435,7 @@ export function PapercutDetailClient({
       </div>
 
       {/* Activity Timeline - Right Side */}
-      <div className="w-64 shrink-0">
+      <div>
         <div className="sticky top-24">
           <h3 className="text-sm font-semibold text-foreground mb-4">Activity</h3>
           <div className="space-y-4">
