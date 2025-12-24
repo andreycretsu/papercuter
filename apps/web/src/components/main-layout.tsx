@@ -429,27 +429,55 @@ export function MainLayout(props: {
                   <div className="text-sm text-muted-foreground">No papercuts yet</div>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {items.slice(0, 12).map((p) => (
-                    <Link key={p.id} href={`/papercuts/${p.id}`}>
-                      <Card className="border border-border p-4 hover:bg-accent transition-colors h-full">
-                        {p.screenshotUrl && (
-                          <div className="w-full h-32 rounded-md overflow-hidden bg-gray-100 mb-3">
-                            <Image
-                              src={p.screenshotUrl}
-                              alt={p.name}
-                              width={280}
-                              height={128}
-                              className="h-full w-full object-cover"
-                            />
+                <div className="space-y-3">
+                  {items.slice(0, 3).map((p) => (
+                    <Card key={p.id} className="border border-border p-3 hover:bg-accent transition-colors h-[72px]">
+                      <Link href={`/papercuts/${p.id}`} className="block h-full">
+                        <div className="flex items-center gap-3 h-full">
+                          {p.screenshotUrl && (
+                            <div className="shrink-0 w-[80px] h-[48px] rounded-md overflow-hidden bg-gray-100">
+                              <Image
+                                src={p.screenshotUrl}
+                                alt={p.name}
+                                width={80}
+                                height={48}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="truncate text-sm font-semibold">
+                                {p.name}
+                              </div>
+                              {p.module && (
+                                <span className="shrink-0 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">
+                                  {p.module}
+                                </span>
+                              )}
+                              {p.type && (
+                                <span className="shrink-0 rounded-md bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-800">
+                                  {p.type}
+                                </span>
+                              )}
+                              <span
+                                className={`shrink-0 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ${
+                                  p.status === "open"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {p.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                              {p.userEmail && <span className="truncate">{p.userEmail}</span>}
+                            </div>
                           </div>
-                        )}
-                        <div className="text-sm font-semibold truncate mb-1">{p.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {p.userEmail || 'Unknown'}
                         </div>
-                      </Card>
-                    </Link>
+                      </Link>
+                    </Card>
                   ))}
                 </div>
               )}
