@@ -20,10 +20,18 @@ export async function generateMetadata({
     const papercut = await getPapercutById(id);
 
     if (!papercut) {
+      console.error('[generateMetadata] Papercut not found:', id);
       return {
         title: "Papercut Not Found",
       };
     }
+
+    console.log('[generateMetadata] Found papercut:', {
+      id: papercut.id,
+      name: papercut.name,
+      hasScreenshot: !!papercut.screenshotUrl,
+      screenshotUrl: papercut.screenshotUrl,
+    });
 
     // Strip HTML tags from description for plain text (server-side)
     let description = papercut.descriptionHtml.replace(/<[^>]*>/g, '').trim();
@@ -36,7 +44,7 @@ export async function generateMetadata({
     const ogDescription = truncatedDescription || 'View this papercut on Cleaqops';
     const ogImage = papercut.screenshotUrl || null;
 
-    return {
+    const metadata = {
       title: papercut.name,
       description: ogDescription,
       openGraph: {
@@ -53,10 +61,10 @@ export async function generateMetadata({
             }
           ],
         } : {}),
-        type: 'website',
+        type: 'website' as const,
       },
       twitter: {
-        card: 'summary_large_image',
+        card: 'summary_large_image' as const,
         title: papercut.name,
         description: ogDescription,
         ...(ogImage ? {
@@ -64,7 +72,12 @@ export async function generateMetadata({
         } : {}),
       },
     };
-  } catch {
+
+    console.log('[generateMetadata] Generated metadata:', JSON.stringify(metadata, null, 2));
+
+    return metadata;
+  } catch (error) {
+    console.error('[generateMetadata] Error:', error);
     return {
       title: "Papercut Not Found",
     };
