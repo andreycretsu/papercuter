@@ -181,8 +181,75 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
     }
   };
 
+  // Mock activity timeline - will be replaced with real data later
+  const activityTimeline = React.useMemo(() => {
+    const events = [
+      {
+        id: '1',
+        action: 'created',
+        user: papercut.userEmail || 'Unknown',
+        timestamp: papercut.createdAt,
+        status: null as PapercutStatus | null,
+      }
+    ];
+
+    // Add status change event if resolved
+    if (currentStatus === 'resolved') {
+      events.push({
+        id: '2',
+        action: 'resolved',
+        user: papercut.userEmail || 'Unknown',
+        timestamp: papercut.createdAt, // Mock timestamp - will be real when we have activity log
+        status: 'resolved' as PapercutStatus,
+      });
+    }
+
+    return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [papercut, currentStatus]);
+
   return (
-    <Card className="border border-border p-8 mb-32">
+    <div className="flex gap-6">
+      {/* Activity Timeline - Left Side */}
+      <div className="w-64 shrink-0">
+        <div className="sticky top-24">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Activity</h3>
+          <div className="space-y-4">
+            {activityTimeline.map((event, index) => (
+              <div key={event.id} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={`w-2 h-2 rounded-full ${
+                    event.action === 'resolved' ? 'bg-green-600' : 'bg-blue-600'
+                  }`} />
+                  {index < activityTimeline.length - 1 && (
+                    <div className="w-0.5 h-full min-h-[40px] bg-border" />
+                  )}
+                </div>
+                <div className="flex-1 pb-4">
+                  <div className="text-sm text-foreground">
+                    <span className="font-medium">{event.user}</span>
+                    {' '}
+                    <span className="text-muted-foreground">
+                      {event.action === 'resolved' ? 'resolved papercut' : 'created papercut'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {new Date(event.timestamp).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <Card className="border border-border p-8 mb-32 flex-1">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -387,6 +454,7 @@ export function PapercutDetailClient({ papercut }: { papercut: Papercut }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+      </Card>
+    </div>
   );
 }

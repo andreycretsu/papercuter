@@ -255,6 +255,15 @@ export function MainLayout(props: {
     return Array.from(new Set(items.map((p) => p.userEmail).filter(Boolean))) as string[];
   }, [items]);
 
+  // Status counts
+  const statusCounts = React.useMemo(() => {
+    return {
+      all: items.length,
+      open: items.filter(p => p.status === 'open').length,
+      resolved: items.filter(p => p.status === 'resolved').length,
+    };
+  }, [items]);
+
   return (
     <div className="min-h-screen bg-background">
       <Snowfall />
@@ -263,43 +272,35 @@ export function MainLayout(props: {
       <div className="sticky top-0 z-10 bg-background border-b border-border w-full">
         <div className="mx-auto w-full px-6 py-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-6">
-              <div>
-                <div className="text-2xl font-semibold leading-tight">Papercuts</div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  Capture a screenshot, add a short description, and turn it into action later.
-                </div>
+            <div>
+              <div className="text-2xl font-semibold leading-tight">Papercuts</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Capture a screenshot, add a short description, and turn it into action later.
               </div>
+            </div>
 
-              {/* Tabs */}
-              <div className="flex items-center gap-1 border-b-2 border-transparent">
-                <button
-                  onClick={() => setActiveTab("dashboard")}
-                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${
-                    activeTab === "dashboard"
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Dashboard
-                  {activeTab === "dashboard" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("papercuts")}
-                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${
-                    activeTab === "papercuts"
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Papercuts
-                  {activeTab === "papercuts" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-                  )}
-                </button>
-              </div>
+            {/* iOS-style Segmented Control - Centered */}
+            <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center bg-muted/50 rounded-lg p-1 gap-1">
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  activeTab === "dashboard"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab("papercuts")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  activeTab === "papercuts"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Papercuts
+              </button>
             </div>
 
             <div className="flex items-center gap-3">
@@ -465,7 +466,7 @@ export function MainLayout(props: {
                             </div>
                           </div>
                           {p.screenshotUrl && (
-                            <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100">
+                            <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100 border border-gray-200">
                               <Image
                                 src={p.screenshotUrl}
                                 alt={p.name}
@@ -501,34 +502,37 @@ export function MainLayout(props: {
                 {/* Segmented Status Filter */}
                 <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                   <button
-                    onClick={() => setStatusFilter('all')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-                      statusFilter === 'all'
-                        ? 'bg-white text-foreground shadow'
-                        : 'hover:bg-white/50'
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
                     onClick={() => setStatusFilter('open')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
+                    className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       statusFilter === 'open'
                         ? 'bg-white text-foreground shadow'
                         : 'hover:bg-white/50'
                     }`}
                   >
                     Open
+                    <span className="text-xs opacity-60">{statusCounts.open}</span>
                   </button>
                   <button
                     onClick={() => setStatusFilter('resolved')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
+                    className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       statusFilter === 'resolved'
                         ? 'bg-white text-foreground shadow'
                         : 'hover:bg-white/50'
                     }`}
                   >
                     Resolved
+                    <span className="text-xs opacity-60">{statusCounts.resolved}</span>
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
+                      statusFilter === 'all'
+                        ? 'bg-white text-foreground shadow'
+                        : 'hover:bg-white/50'
+                    }`}
+                  >
+                    All
+                    <span className="text-xs opacity-60">{statusCounts.all}</span>
                   </button>
                 </div>
 
@@ -648,7 +652,7 @@ export function MainLayout(props: {
                               </div>
                             </div>
                             {p.screenshotUrl && (
-                              <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100">
+                              <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100 border border-gray-200">
                                 <Image
                                   src={p.screenshotUrl}
                                   alt={p.name}
