@@ -51,6 +51,19 @@ export async function generateMetadata({
     const ogDescription = truncatedDescription || 'View this papercut on Cleaqops';
     const ogImage = papercut.screenshotUrl || null;
 
+    // Detect image type from URL extension
+    const getImageType = (url: string | null): string => {
+      if (!url) return 'image/png';
+      const ext = url.split('.').pop()?.toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+      if (ext === 'png') return 'image/png';
+      if (ext === 'webp') return 'image/webp';
+      if (ext === 'gif') return 'image/gif';
+      return 'image/png'; // default
+    };
+
+    const imageType = getImageType(ogImage);
+
     const metadata: Metadata = {
       title: papercut.name,
       description: ogDescription,
@@ -67,7 +80,7 @@ export async function generateMetadata({
               width: 1200,
               height: 630,
               alt: papercut.name,
-              type: 'image/jpeg',
+              type: imageType,
             }
           ],
         } : {}),
@@ -80,11 +93,11 @@ export async function generateMetadata({
           images: [ogImage],
         } : {}),
       },
-      // Additional metadata for better compatibility
+      // Additional metadata for better iMessage compatibility
       other: {
         ...(ogImage ? {
           'og:image:secure_url': ogImage,
-          'og:image:type': 'image/jpeg',
+          'og:image:type': imageType,
           'og:image:width': '1200',
           'og:image:height': '630',
         } : {}),
