@@ -290,9 +290,6 @@ export function MainLayout(props: {
                 }`}
               >
                 Dashboard
-                <span className="ml-2 text-xs opacity-70">
-                  {items.filter(p => p.status === 'resolved').length}
-                </span>
               </button>
               <button
                 onClick={() => setActiveTab("papercuts")}
@@ -459,7 +456,7 @@ export function MainLayout(props: {
             </div>
 
             {/* Recent Papercuts */}
-            <div>
+            <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Recent Papercuts</h2>
               {items.length === 0 ? (
                 <Card className="border border-border p-6">
@@ -494,6 +491,62 @@ export function MainLayout(props: {
                                 }`}
                               >
                                 {p.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                              {p.userEmail && <span className="truncate">{p.userEmail}</span>}
+                            </div>
+                          </div>
+                          {p.screenshotUrl && (
+                            <div className="shrink-0 w-[112px] h-[64px] rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+                              <Image
+                                src={p.screenshotUrl}
+                                alt={p.name}
+                                width={112}
+                                height={64}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recently Resolved Papercuts */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Recently Resolved</h2>
+              {items.filter(p => p.status === 'resolved').length === 0 ? (
+                <Card className="border border-border p-6">
+                  <div className="text-sm text-muted-foreground">No resolved papercuts yet</div>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {items.filter(p => p.status === 'resolved').slice(0, 3).map((p) => (
+                    <Card key={p.id} className="border border-border p-3 hover:bg-accent transition-colors h-[72px]">
+                      <Link href={`/papercuts/${p.id}`} className="block h-full">
+                        <div className="flex items-center gap-3 h-full">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="truncate text-sm font-semibold">
+                                {p.name}
+                              </div>
+                              {p.module && (
+                                <span className="shrink-0 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">
+                                  {p.module}
+                                </span>
+                              )}
+                              {p.type && (
+                                <span className="shrink-0 rounded-md bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-800">
+                                  {p.type}
+                                </span>
+                              )}
+                              <span className="shrink-0 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">
+                                resolved
                               </span>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
