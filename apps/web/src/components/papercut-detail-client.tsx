@@ -220,59 +220,10 @@ export function PapercutDetailClient({
   }, [activity]);
 
   return (
-    <div className="flex gap-6">
-      {/* Activity Timeline - Left Side */}
-      <div className="w-64 shrink-0">
-        <div className="sticky top-24">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Activity</h3>
-          <div className="space-y-4">
-            {activityTimeline.map((event, index) => {
-              const actionColor = event.action === 'resolved' ? 'bg-green-600' :
-                                 event.action === 'reopened' ? 'bg-yellow-600' :
-                                 event.action === 'edited' ? 'bg-purple-600' :
-                                 'bg-blue-600';
-
-              const actionText = event.action === 'created' ? 'created papercut' :
-                                event.action === 'resolved' ? 'resolved papercut' :
-                                event.action === 'reopened' ? 'reopened papercut' :
-                                event.action === 'edited' ? 'edited papercut' :
-                                event.action;
-
-              return (
-                <div key={event.id} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-2 h-2 rounded-full ${actionColor}`} />
-                    {index < activityTimeline.length - 1 && (
-                      <div className="w-0.5 h-full min-h-[40px] bg-border" />
-                    )}
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="text-sm text-foreground">
-                      <span className="font-medium">{event.user}</span>
-                      {' '}
-                      <span className="text-muted-foreground">
-                        {actionText}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {new Date(event.timestamp).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <Card className="border border-border p-8 mb-32 flex-1">
+    <div className="flex gap-6 justify-center">
+      {/* Main Content - Centered */}
+      <div className="flex-1 max-w-3xl">
+        <Card className="border border-border p-8 mb-32">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -478,6 +429,57 @@ export function PapercutDetailClient({
         </DialogContent>
       </Dialog>
       </Card>
+      </div>
+
+      {/* Activity Timeline - Right Side */}
+      <div className="w-64 shrink-0">
+        <div className="sticky top-24">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Activity</h3>
+          <div className="space-y-4">
+            {activityTimeline.map((event, index) => {
+              const actionColor = event.action === 'resolved' ? 'bg-green-600' :
+                                 event.action === 'reopened' ? 'bg-yellow-600' :
+                                 event.action === 'edited' ? 'bg-purple-600' :
+                                 'bg-blue-600';
+
+              const actionText = event.action === 'created' ? 'created papercut' :
+                                event.action === 'resolved' ? 'resolved papercut' :
+                                event.action === 'reopened' ? 'reopened papercut' :
+                                event.action === 'edited' ? 'edited papercut' :
+                                event.action;
+
+              return (
+                <div key={event.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full ${actionColor}`} />
+                    {index < activityTimeline.length - 1 && (
+                      <div className="w-0.5 h-full min-h-[40px] bg-border" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="text-sm text-foreground">
+                      <span className="font-medium">{event.user}</span>
+                      {' '}
+                      <span className="text-muted-foreground">
+                        {actionText}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(event.timestamp).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
