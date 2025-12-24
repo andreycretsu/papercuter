@@ -402,62 +402,60 @@ export function MainLayout(props: {
             {/* Module breakdown */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Papercuts by Module</h2>
-              {moduleStats.length === 0 ? (
-                <Card className="border border-border p-6">
-                  <div className="text-sm text-muted-foreground">No modules yet</div>
-                </Card>
-              ) : (
-                <Card className="border border-border p-6">
-                  {/* Module labels with counts */}
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
-                    {moduleStats.map((stat, index) => {
-                      const colors = [
-                        'text-blue-600',
-                        'text-green-600',
-                        'text-purple-600',
-                        'text-orange-600',
-                        'text-pink-600',
-                        'text-teal-600',
-                        'text-indigo-600',
-                      ];
-                      const colorClass = colors[index % colors.length];
+              <Card className="border border-border p-6">
+                {/* Module labels with counts */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+                  {PAPERCUT_MODULES.map((moduleName, index) => {
+                    const stat = moduleStats.find(s => s.module === moduleName);
+                    const count = stat?.count || 0;
+                    const colors = [
+                      'text-blue-600',
+                      'text-green-600',
+                      'text-purple-600',
+                      'text-orange-600',
+                      'text-pink-600',
+                      'text-teal-600',
+                      'text-indigo-600',
+                    ];
+                    const colorClass = colors[index % colors.length];
 
-                      return (
-                        <div key={stat.module} className="flex items-center gap-2">
-                          <span className={`font-medium ${colorClass}`}>{stat.module}</span>
-                          <span className="text-2xl font-bold">{stat.count}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                    return (
+                      <div key={moduleName} className="flex items-center gap-1.5">
+                        <span className={`text-xs font-medium ${colorClass}`}>{moduleName}</span>
+                        <span className="text-xs font-semibold text-foreground">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                  {/* Single horizontal bar with segments */}
-                  <div className="flex h-8 rounded-lg overflow-hidden gap-px bg-border">
-                    {moduleStats.map((stat, index) => {
-                      const colors = [
-                        'bg-blue-600',
-                        'bg-green-600',
-                        'bg-purple-600',
-                        'bg-orange-600',
-                        'bg-pink-600',
-                        'bg-teal-600',
-                        'bg-indigo-600',
-                      ];
-                      const colorClass = colors[index % colors.length];
-                      const percentage = (stat.count / items.length) * 100;
+                {/* Single horizontal bar with segments */}
+                <div className="flex h-2 rounded-full overflow-hidden gap-px bg-border">
+                  {PAPERCUT_MODULES.map((moduleName, index) => {
+                    const stat = moduleStats.find(s => s.module === moduleName);
+                    const count = stat?.count || 0;
+                    const colors = [
+                      'bg-blue-600',
+                      'bg-green-600',
+                      'bg-purple-600',
+                      'bg-orange-600',
+                      'bg-pink-600',
+                      'bg-teal-600',
+                      'bg-indigo-600',
+                    ];
+                    const colorClass = colors[index % colors.length];
+                    const percentage = items.length > 0 ? (count / items.length) * 100 : 0;
 
-                      return (
-                        <div
-                          key={stat.module}
-                          className={`${colorClass} transition-all`}
-                          style={{ width: `${percentage}%` }}
-                          title={`${stat.module}: ${stat.count}`}
-                        />
-                      );
-                    })}
-                  </div>
-                </Card>
-              )}
+                    return (
+                      <div
+                        key={moduleName}
+                        className={`${colorClass} transition-all ${count === 0 ? 'opacity-20' : ''}`}
+                        style={{ width: `${Math.max(percentage, 1)}%` }}
+                        title={`${moduleName}: ${count}`}
+                      />
+                    );
+                  })}
+                </div>
+              </Card>
             </div>
 
             {/* Recent Papercuts */}
