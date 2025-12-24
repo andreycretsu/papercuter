@@ -50,7 +50,9 @@ export async function generateMetadata({
       openGraph: {
         title: papercut.name,
         description: ogDescription,
+        url: `https://cleaqops.com/papercuts/${id}`,
         siteName: 'Cleaqops Papercuts',
+        type: 'website' as const,
         ...(ogImage ? {
           images: [
             {
@@ -61,7 +63,6 @@ export async function generateMetadata({
             }
           ],
         } : {}),
-        type: 'website' as const,
       },
       twitter: {
         card: 'summary_large_image' as const,
