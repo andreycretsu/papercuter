@@ -51,7 +51,7 @@ export async function generateMetadata({
     const ogDescription = truncatedDescription || 'View this papercut on Cleaqops';
     const ogImage = papercut.screenshotUrl || null;
 
-    const metadata = {
+    const metadata: Metadata = {
       title: papercut.name,
       description: ogDescription,
       openGraph: {
@@ -67,6 +67,7 @@ export async function generateMetadata({
               width: 1200,
               height: 630,
               alt: papercut.name,
+              type: 'image/jpeg',
             }
           ],
         } : {}),
@@ -77,6 +78,15 @@ export async function generateMetadata({
         description: ogDescription,
         ...(ogImage ? {
           images: [ogImage],
+        } : {}),
+      },
+      // Additional metadata for better compatibility
+      other: {
+        ...(ogImage ? {
+          'og:image:secure_url': ogImage,
+          'og:image:type': 'image/jpeg',
+          'og:image:width': '1200',
+          'og:image:height': '630',
         } : {}),
       },
     };
